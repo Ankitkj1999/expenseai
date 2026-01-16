@@ -1,0 +1,17 @@
+{
+  "workspace": {
+    "id": "1ceb4a15-54c8-4893-9899-dc25dbadff0c"
+  },
+  "entities": {
+    "collections": [
+      {
+        "id": "59e67707-7b1f-4d58-b11f-abfe4f50c3a9",
+        "path": "postman/collections/ExpenseAI_API.postman_collection.json"
+      }
+    ],
+    "environments": [],
+    "specs": [],
+    "flows": [],
+    "globals": []
+  }
+}

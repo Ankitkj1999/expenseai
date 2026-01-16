@@ -1,0 +1,123 @@
+{
+  "info": {
+    "_postman_id": "59e67707-7b1f-4d58-b11f-abfe4f50c3a9",
+    "name": "ExpenseAI API",
+    "description": "API collection for ExpenseAI application with HTTP-only cookie-based authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user account.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password (minimum 6 characters)\n\n**Success Response (201):**\n- Returns user details\n- Sets HTTP-only cookie with JWT token\n\n**Response Headers:**\n- `Set-Cookie: auth-token=<jwt_token>; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/`\n\n**Error Responses:**\n- `400` - Validation failed\n- `409` - User already exists\n- `500` - Internal server error"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with existing credentials.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password\n\n**Success Response (200):**\n- Returns user details\n- Sets HTTP-only cookie with JWT token\n\n**Response Headers:**\n- `Set-Cookie: auth-token=<jwt_token>; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/`\n\n**Error Responses:**\n- `400` - Validation failed\n- `401` - Invalid credentials\n- `500` - Internal server error"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get the currently authenticated user's information.\n\n**Authentication:**\n- Uses HTTP-only cookie (automatically sent by browser/Postman)\n- No Authorization header needed\n\n**Success Response (200):**\n- Returns current user details\n\n**Error Responses:**\n- `401` - Unauthorized (no token, invalid token, or user not found)\n- `500` - Internal server error"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout the current user by clearing the authentication cookie.\n\n**Success Response (200):**\n- Returns success message\n- Clears the auth-token cookie\n\n**Response Headers:**\n- `Set-Cookie: auth-token=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/`\n\n**Error Responses:**\n- `500` - Internal server error"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for user registration, login, logout, and profile retrieval using HTTP-only cookies"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
