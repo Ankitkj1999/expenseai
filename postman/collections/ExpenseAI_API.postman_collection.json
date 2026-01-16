@@ -26,16 +26,10 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
             },
-            "description": "Register a new user account.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password (minimum 6 characters)\n\n**Success Response (201):**\n- Returns user details\n- Sets HTTP-only cookie with JWT token\n\n**Response Headers:**\n- `Set-Cookie: auth-token=<jwt_token>; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/`\n\n**Error Responses:**\n- `400` - Validation failed\n- `409` - User already exists\n- `500` - Internal server error"
+            "description": "Register a new user account.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password (minimum 6 characters)\n\n**Success Response (201):**\n- Returns user details\n- Sets HTTP-only cookie with JWT token"
           },
           "response": []
         },
@@ -56,16 +50,10 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
             },
-            "description": "Login with existing credentials.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password\n\n**Success Response (200):**\n- Returns user details\n- Sets HTTP-only cookie with JWT token\n\n**Response Headers:**\n- `Set-Cookie: auth-token=<jwt_token>; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/`\n\n**Error Responses:**\n- `400` - Validation failed\n- `401` - Invalid credentials\n- `500` - Internal server error"
+            "description": "Login with existing credentials."
           },
           "response": []
         },
@@ -76,16 +64,10 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
             },
-            "description": "Get the currently authenticated user's information.\n\n**Authentication:**\n- Uses HTTP-only cookie (automatically sent by browser/Postman)\n- No Authorization header needed\n\n**Success Response (200):**\n- Returns current user details\n\n**Error Responses:**\n- `401` - Unauthorized (no token, invalid token, or user not found)\n- `500` - Internal server error"
+            "description": "Get the currently authenticated user's information."
           },
           "response": []
         },
@@ -96,27 +78,122 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "logout"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
             },
-            "description": "Logout the current user by clearing the authentication cookie.\n\n**Success Response (200):**\n- Returns success message\n- Clears the auth-token cookie\n\n**Response Headers:**\n- `Set-Cookie: auth-token=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/`\n\n**Error Responses:**\n- `500` - Internal server error"
+            "description": "Logout the current user by clearing the authentication cookie."
           },
           "response": []
         }
       ],
       "description": "Authentication endpoints for user registration, login, logout, and profile retrieval using HTTP-only cookies"
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "List All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts"]
+            },
+            "description": "Get all active accounts for the authenticated user.\n\n**Success Response (200):**\n- Returns array of accounts\n- Includes total balance and count\n\n**Error Responses:**\n- `401` - Unauthorized\n- `500` - Internal server error"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"HDFC Bank\",\n  \"type\": \"bank\",\n  \"balance\": 10000,\n  \"currency\": \"INR\",\n  \"icon\": \"bank\",\n  \"color\": \"#10B981\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts"]
+            },
+            "description": "Create a new account.\n\n**Request Body:**\n- `name` (string, required): Account name\n- `type` (string, required): Account type - cash, bank, credit, wallet\n- `balance` (number, optional): Initial balance (default: 0)\n- `currency` (string, optional): Currency code (default: INR)\n- `icon` (string, optional): Icon identifier (default: wallet)\n- `color` (string, optional): Hex color code (default: #3B82F6)\n\n**Success Response (201):**\n- Returns created account details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "{{accountId}}"]
+            },
+            "description": "Get details of a specific account.\n\n**URL Parameters:**\n- `accountId` (string, required): Account ID\n\n**Success Response (200):**\n- Returns account details\n\n**Error Responses:**\n- `401` - Unauthorized\n- `404` - Account not found\n- `500` - Internal server error"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Account",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Cash Account\",\n  \"balance\": 7500,\n  \"color\": \"#EF4444\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "{{accountId}}"]
+            },
+            "description": "Update an existing account.\n\n**URL Parameters:**\n- `accountId` (string, required): Account ID\n\n**Request Body (all optional):**\n- `name` (string): Account name\n- `type` (string): Account type\n- `balance` (number): Current balance\n- `currency` (string): Currency code\n- `icon` (string): Icon identifier\n- `color` (string): Hex color code\n- `isActive` (boolean): Account active status\n\n**Success Response (200):**\n- Returns updated account details"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts", "{{accountId}}"]
+            },
+            "description": "Soft delete an account (sets isActive to false).\n\n**URL Parameters:**\n- `accountId` (string, required): Account ID\n\n**Success Response (200):**\n- Returns success message\n\n**Error Responses:**\n- `401` - Unauthorized\n- `404` - Account not found\n- `500` - Internal server error"
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage user accounts (cash, bank, credit card, wallet) for expense tracking"
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accountId",
+      "value": "",
       "type": "string"
     }
   ]
