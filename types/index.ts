@@ -92,6 +92,83 @@ export interface AccountsListResponse {
   count: number;
 }
 
+// Transaction types
+export type TransactionType = 'expense' | 'income' | 'transfer';
+
+export interface CreateTransactionRequest {
+  type: TransactionType;
+  amount: number;
+  description: string;
+  accountId: string;
+  toAccountId?: string;
+  categoryId?: string;
+  tags?: string[];
+  date?: string;
+  attachments?: Array<{
+    url: string;
+    type: string;
+    extractedData?: Record<string, unknown>;
+  }>;
+  aiGenerated?: boolean;
+  metadata?: {
+    location?: string;
+    notes?: string;
+  };
+}
+
+export interface UpdateTransactionRequest {
+  type?: TransactionType;
+  amount?: number;
+  description?: string;
+  accountId?: string;
+  toAccountId?: string;
+  categoryId?: string;
+  tags?: string[];
+  date?: string;
+  attachments?: Array<{
+    url: string;
+    type: string;
+    extractedData?: Record<string, unknown>;
+  }>;
+  aiGenerated?: boolean;
+  metadata?: {
+    location?: string;
+    notes?: string;
+  };
+}
+
+export interface TransactionResponse {
+  _id: string;
+  userId: string;
+  type: TransactionType;
+  amount: number;
+  description: string;
+  accountId: string | AccountResponse;
+  toAccountId?: string | AccountResponse;
+  categoryId?: string | CategoryResponse;
+  tags: string[];
+  date: Date;
+  attachments: Array<{
+    url: string;
+    type: string;
+    extractedData?: Record<string, unknown>;
+  }>;
+  aiGenerated: boolean;
+  metadata: {
+    location?: string;
+    notes?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TransactionsListResponse {
+  transactions: TransactionResponse[];
+  total: number;
+  limit: number;
+  skip: number;
+}
+
 // Category types
 export type CategoryType = 'expense' | 'income';
 
