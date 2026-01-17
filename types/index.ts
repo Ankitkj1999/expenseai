@@ -201,3 +201,56 @@ export interface CategoriesListResponse {
   categories: CategoryResponse[];
   count: number;
 }
+
+// Budget types
+export type BudgetPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface CreateBudgetRequest {
+  name: string;
+  categoryId?: string;
+  amount: number;
+  period: BudgetPeriod;
+  startDate: string;
+  endDate: string;
+  alertThreshold?: number;
+}
+
+export interface UpdateBudgetRequest {
+  name?: string;
+  categoryId?: string;
+  amount?: number;
+  period?: BudgetPeriod;
+  startDate?: string;
+  endDate?: string;
+  alertThreshold?: number;
+  isActive?: boolean;
+}
+
+export interface BudgetResponse {
+  _id: string;
+  userId: string;
+  name: string;
+  categoryId?: string | CategoryResponse;
+  amount: number;
+  period: BudgetPeriod;
+  startDate: Date;
+  endDate: Date;
+  alertThreshold: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface BudgetStatusResponse {
+  budget: BudgetResponse;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  isOverBudget: boolean;
+  shouldAlert: boolean;
+}
+
+export interface BudgetsListResponse {
+  budgets: BudgetResponse[];
+  count: number;
+}

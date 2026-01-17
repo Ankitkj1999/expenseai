@@ -49,6 +49,20 @@
         {"name": "Delete Transaction", "request": {"method": "DELETE", "header": [], "url": {"raw": "{{baseUrl}}/api/transactions/{{transactionId}}", "host": ["{{baseUrl}}"], "path": ["api", "transactions", "{{transactionId}}"]}, "description": "Delete a transaction and revert account balance changes."}, "response": []}
       ],
       "description": "Manage transactions with automatic balance updates"
+    },
+    {
+      "name": "Budgets",
+      "item": [
+        {"name": "List All Budgets", "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"], "query": [{"key": "isActive", "value": "true", "disabled": true}, {"key": "categoryId", "value": "", "disabled": true}, {"key": "period", "value": "monthly", "disabled": true}]}, "description": "Get all budgets with optional filters.\n\n**Query Parameters:**\n- `isActive`: Filter by active status (true/false)\n- `categoryId`: Filter by category\n- `period`: Filter by period (daily, weekly, monthly, yearly)"}, "response": []},
+        {"name": "Create Budget", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}], "body": {"mode": "raw", "raw": "{\n  \"name\": \"Monthly Groceries\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"amount\": 10000,\n  \"period\": \"monthly\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"endDate\": \"2024-01-31T23:59:59.999Z\",\n  \"alertThreshold\": 80\n}"}, "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"]}, "description": "Create a new budget.\n\n**Required:**\n- name, amount, period, startDate, endDate\n\n**Optional:**\n- categoryId (null for overall budget)\n- alertThreshold (default: 80)"}, "response": []},
+        {"name": "Create Overall Budget", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}], "body": {"mode": "raw", "raw": "{\n  \"name\": \"Monthly Spending Limit\",\n  \"amount\": 50000,\n  \"period\": \"monthly\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"endDate\": \"2024-01-31T23:59:59.999Z\",\n  \"alertThreshold\": 90\n}"}, "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"]}, "description": "Create an overall budget without category restriction."}, "response": []},
+        {"name": "Get Budget by ID", "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets/{{budgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "{{budgetId}}"]}, "description": "Get details of a specific budget."}, "response": []},
+        {"name": "Get Budget Status", "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets/{{budgetId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "{{budgetId}}", "status"]}, "description": "Get budget status with spending information.\n\n**Returns:**\n- spent: Total amount spent\n- remaining: Remaining budget\n- percentage: Usage percentage\n- isOverBudget: Whether budget exceeded\n- shouldAlert: Whether alert threshold reached"}, "response": []},
+        {"name": "Update Budget", "request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}], "body": {"mode": "raw", "raw": "{\n  \"name\": \"Updated Budget Name\",\n  \"amount\": 12000,\n  \"alertThreshold\": 90\n}"}, "url": {"raw": "{{baseUrl}}/api/budgets/{{budgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "{{budgetId}}"]}, "description": "Update a budget. All fields are optional."}, "response": []},
+        {"name": "Deactivate Budget", "request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}], "body": {"mode": "raw", "raw": "{\n  \"isActive\": false\n}"}, "url": {"raw": "{{baseUrl}}/api/budgets/{{budgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "{{budgetId}}"]}, "description": "Deactivate a budget without deleting it."}, "response": []},
+        {"name": "Delete Budget", "request": {"method": "DELETE", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets/{{budgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "{{budgetId}}"]}, "description": "Permanently delete a budget."}, "response": []}
+      ],
+      "description": "Manage budgets and track spending"
     }
   ],
   "variable": [
@@ -56,6 +70,7 @@
     {"key": "accountId", "value": "", "type": "string"},
     {"key": "toAccountId", "value": "", "type": "string"},
     {"key": "categoryId", "value": "", "type": "string"},
-    {"key": "transactionId", "value": "", "type": "string"}
+    {"key": "transactionId", "value": "", "type": "string"},
+    {"key": "budgetId", "value": "", "type": "string"}
   ]
 }
