@@ -13,23 +13,10 @@
           "name": "Register User",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
-            },
-            "description": "Register a new user account.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password (minimum 6 characters)\n\n**Success Response (201):**\n- Returns user details\n- Sets HTTP-only cookie with JWT token"
+            "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"]},
+            "description": "Register a new user account."
           },
           "response": []
         },
@@ -37,22 +24,9 @@
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
-            },
+            "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"]},
             "description": "Login with existing credentials."
           },
           "response": []
@@ -62,11 +36,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
-            },
+            "url": {"raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"]},
             "description": "Get the currently authenticated user's information."
           },
           "response": []
@@ -76,17 +46,13 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
-            },
+            "url": {"raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "auth", "logout"]},
             "description": "Logout the current user by clearing the authentication cookie."
           },
           "response": []
         }
       ],
-      "description": "Authentication endpoints for user registration, login, logout, and profile retrieval using HTTP-only cookies"
+      "description": "Authentication endpoints"
     },
     {
       "name": "Accounts",
@@ -96,12 +62,8 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/accounts",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accounts"]
-            },
-            "description": "Get all active accounts for the authenticated user.\n\n**Success Response (200):**\n- Returns array of accounts\n- Includes total balance and count\n\n**Error Responses:**\n- `401` - Unauthorized\n- `500` - Internal server error"
+            "url": {"raw": "{{baseUrl}}/api/accounts", "host": ["{{baseUrl}}"], "path": ["api", "accounts"]},
+            "description": "Get all active accounts for the authenticated user."
           },
           "response": []
         },
@@ -109,23 +71,10 @@
           "name": "Create Account",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"HDFC Bank\",\n  \"type\": \"bank\",\n  \"balance\": 10000,\n  \"currency\": \"INR\",\n  \"icon\": \"bank\",\n  \"color\": \"#10B981\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accounts",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accounts"]
-            },
-            "description": "Create a new account.\n\n**Request Body:**\n- `name` (string, required): Account name\n- `type` (string, required): Account type - cash, bank, credit, wallet\n- `balance` (number, optional): Initial balance (default: 0)\n- `currency` (string, optional): Currency code (default: INR)\n- `icon` (string, optional): Icon identifier (default: wallet)\n- `color` (string, optional): Hex color code (default: #3B82F6)\n\n**Success Response (201):**\n- Returns created account details"
+            "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"HDFC Bank\",\n  \"type\": \"bank\",\n  \"balance\": 10000,\n  \"currency\": \"INR\",\n  \"icon\": \"bank\",\n  \"color\": \"#10B981\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/accounts", "host": ["{{baseUrl}}"], "path": ["api", "accounts"]},
+            "description": "Create a new account."
           },
           "response": []
         },
@@ -134,12 +83,8 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accounts", "{{accountId}}"]
-            },
-            "description": "Get details of a specific account.\n\n**URL Parameters:**\n- `accountId` (string, required): Account ID\n\n**Success Response (200):**\n- Returns account details\n\n**Error Responses:**\n- `401` - Unauthorized\n- `404` - Account not found\n- `500` - Internal server error"
+            "url": {"raw": "{{baseUrl}}/api/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api", "accounts", "{{accountId}}"]},
+            "description": "Get details of a specific account."
           },
           "response": []
         },
@@ -147,23 +92,10 @@
           "name": "Update Account",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Cash Account\",\n  \"balance\": 7500,\n  \"color\": \"#EF4444\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accounts", "{{accountId}}"]
-            },
-            "description": "Update an existing account.\n\n**URL Parameters:**\n- `accountId` (string, required): Account ID\n\n**Request Body (all optional):**\n- `name` (string): Account name\n- `type` (string): Account type\n- `balance` (number): Current balance\n- `currency` (string): Currency code\n- `icon` (string): Icon identifier\n- `color` (string): Hex color code\n- `isActive` (boolean): Account active status\n\n**Success Response (200):**\n- Returns updated account details"
+            "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Updated Cash Account\",\n  \"balance\": 7500,\n  \"color\": \"#EF4444\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api", "accounts", "{{accountId}}"]},
+            "description": "Update an existing account."
           },
           "response": []
         },
@@ -172,29 +104,71 @@
           "request": {
             "method": "DELETE",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/accounts/{{accountId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accounts", "{{accountId}}"]
-            },
-            "description": "Soft delete an account (sets isActive to false).\n\n**URL Parameters:**\n- `accountId` (string, required): Account ID\n\n**Success Response (200):**\n- Returns success message\n\n**Error Responses:**\n- `401` - Unauthorized\n- `404` - Account not found\n- `500` - Internal server error"
+            "url": {"raw": "{{baseUrl}}/api/accounts/{{accountId}}", "host": ["{{baseUrl}}"], "path": ["api", "accounts", "{{accountId}}"]},
+            "description": "Soft delete an account."
           },
           "response": []
         }
       ],
-      "description": "Manage user accounts (cash, bank, credit card, wallet) for expense tracking"
+      "description": "Manage user accounts"
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"],
+              "query": [{"key": "type", "value": "expense", "disabled": true}]
+            },
+            "description": "Get all categories (system + custom).\n\n**Query Parameters:**\n- `type` (optional): Filter by expense or income"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Custom Category",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Pets\",\n  \"type\": \"expense\",\n  \"icon\": \"pets\",\n  \"color\": \"#F59E0B\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"]},
+            "description": "Create a new custom category.\n\n**Request Body:**\n- `name` (string, required): Category name\n- `type` (string, required): expense or income\n- `icon` (string, optional): Icon identifier\n- `color` (string, optional): Hex color code"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Custom Category",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Pet Care\",\n  \"color\": \"#10B981\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["api", "categories", "{{categoryId}}"]},
+            "description": "Update a custom category. System categories cannot be edited."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Custom Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {"raw": "{{baseUrl}}/api/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["api", "categories", "{{categoryId}}"]},
+            "description": "Delete a custom category. System categories cannot be deleted."
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage expense and income categories"
     }
   ],
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000",
-      "type": "string"
-    },
-    {
-      "key": "accountId",
-      "value": "",
-      "type": "string"
-    }
+    {"key": "baseUrl", "value": "http://localhost:3000", "type": "string"},
+    {"key": "accountId", "value": "", "type": "string"},
+    {"key": "categoryId", "value": "", "type": "string"}
   ]
 }

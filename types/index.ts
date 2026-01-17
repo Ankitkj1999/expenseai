@@ -91,3 +91,36 @@ export interface AccountsListResponse {
   totalBalance: number;
   count: number;
 }
+
+// Category types
+export type CategoryType = 'expense' | 'income';
+
+export interface CreateCategoryRequest {
+  name: string;
+  type: CategoryType;
+  icon?: string;
+  color?: string;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  type?: CategoryType;
+  icon?: string;
+  color?: string;
+}
+
+export interface CategoryResponse {
+  _id: string;
+  userId: string | null;
+  name: string;
+  type: CategoryType;
+  icon: string;
+  color: string;
+  isSystem: boolean;
+  createdAt: Date;
+}
+
+export interface CategoriesListResponse {
+  categories: CategoryResponse[];
+  count: number;
+}
