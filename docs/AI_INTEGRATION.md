@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
 
   // Call Vercel AI SDK with tools
   const result = await streamText({
-    model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
+    model: bedrock('amazon.nova-pro-v1:0'),
     messages,
     tools: {
       getTransactions: {
