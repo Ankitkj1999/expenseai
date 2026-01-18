@@ -9,9 +9,12 @@ import connectDB from '@/lib/db/mongodb';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     const authResult = await authenticate(req);
     if (!authResult.authenticated || !authResult.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -19,7 +22,7 @@ export async function GET(
 
     await connectDB();
 
-    const budget = await budgetService.getBudgetById(params.id, authResult.userId);
+    const budget = await budgetService.getBudgetById(id, authResult.userId);
 
     if (!budget) {
       return NextResponse.json(
@@ -53,9 +56,12 @@ export async function GET(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     const authResult = await authenticate(req);
     if (!authResult.authenticated || !authResult.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -104,7 +110,7 @@ export async function PUT(
     }
 
     const budget = await budgetService.updateBudget(
-      params.id,
+      id,
       authResult.userId,
       body
     );
@@ -142,9 +148,12 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     const authResult = await authenticate(req);
     if (!authResult.authenticated || !authResult.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -152,7 +161,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const deleted = await budgetService.deleteBudget(params.id, authResult.userId);
+    const deleted = await budgetService.deleteBudget(id, authResult.userId);
 
     if (!deleted) {
       return NextResponse.json(

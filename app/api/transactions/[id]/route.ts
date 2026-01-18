@@ -7,9 +7,12 @@ import { updateTransaction, deleteTransaction } from '@/lib/services/transaction
 // GET /api/transactions/[id] - Get a specific transaction
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -25,7 +28,7 @@ export async function GET(
 
     // Find transaction
     const transaction = await Transaction.findOne({
-      _id: params.id,
+      _id: id,
       userId: auth.userId,
     })
       .populate('accountId', 'name type icon color')
@@ -52,9 +55,12 @@ export async function GET(
 // PUT /api/transactions/[id] - Update a transaction
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -104,7 +110,7 @@ export async function PUT(
     if (metadata !== undefined) updates.metadata = metadata;
 
     // Update transaction with balance adjustments
-    const transaction = await updateTransaction(auth.userId, params.id, updates);
+    const transaction = await updateTransaction(auth.userId, id, updates);
 
     // Populate references
     await transaction.populate('accountId', 'name type icon color');
@@ -131,9 +137,12 @@ export async function PUT(
 // DELETE /api/transactions/[id] - Delete a transaction
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -145,7 +154,7 @@ export async function DELETE(
     }
 
     // Delete transaction with balance reversion
-    await deleteTransaction(auth.userId, params.id);
+    await deleteTransaction(auth.userId, id);
 
     return NextResponse.json({
       message: 'Transaction deleted successfully',

@@ -6,9 +6,12 @@ import { authenticate } from '@/lib/middleware/auth';
 // PUT /api/accounts/[id] - Update an account
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -39,7 +42,7 @@ export async function PUT(
 
     // Find and update account
     const account = await Account.findOneAndUpdate(
-      { _id: params.id, userId: auth.userId },
+      { _id: id, userId: auth.userId },
       {
         ...(name && { name }),
         ...(type && { type }),
@@ -75,9 +78,12 @@ export async function PUT(
 // DELETE /api/accounts/[id] - Delete an account (soft delete)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -93,7 +99,7 @@ export async function DELETE(
 
     // Soft delete by setting isActive to false
     const account = await Account.findOneAndUpdate(
-      { _id: params.id, userId: auth.userId },
+      { _id: id, userId: auth.userId },
       { isActive: false },
       { new: true }
     );
@@ -120,9 +126,12 @@ export async function DELETE(
 // GET /api/accounts/[id] - Get a specific account
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -138,7 +147,7 @@ export async function GET(
 
     // Find account
     const account = await Account.findOne({
-      _id: params.id,
+      _id: id,
       userId: auth.userId,
     });
 

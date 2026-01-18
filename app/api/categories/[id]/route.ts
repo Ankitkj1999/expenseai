@@ -6,9 +6,12 @@ import { authenticate } from '@/lib/middleware/auth';
 // PUT /api/categories/[id] - Update a custom category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -35,7 +38,7 @@ export async function PUT(
     await connectDB();
 
     // Find category and check ownership
-    const category = await Category.findById(params.id);
+    const category = await Category.findById(id);
 
     if (!category) {
       return NextResponse.json(
@@ -62,7 +65,7 @@ export async function PUT(
 
     // Update category
     const updatedCategory = await Category.findByIdAndUpdate(
-      params.id,
+      id,
       {
         ...(name && { name }),
         ...(type && { type }),
@@ -88,9 +91,12 @@ export async function PUT(
 // DELETE /api/categories/[id] - Delete a custom category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     // Authenticate user
     const auth = await authenticate(request);
     
@@ -105,7 +111,7 @@ export async function DELETE(
     await connectDB();
 
     // Find category and check ownership
-    const category = await Category.findById(params.id);
+    const category = await Category.findById(id);
 
     if (!category) {
       return NextResponse.json(
@@ -131,7 +137,7 @@ export async function DELETE(
     }
 
     // Delete category
-    await Category.findByIdAndDelete(params.id);
+    await Category.findByIdAndDelete(id);
 
     return NextResponse.json({
       message: 'Category deleted successfully',

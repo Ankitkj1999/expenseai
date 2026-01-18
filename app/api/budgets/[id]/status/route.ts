@@ -9,9 +9,12 @@ import connectDB from '@/lib/db/mongodb';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params;
+    
     const authResult = await authenticate(req);
     if (!authResult.authenticated || !authResult.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -19,7 +22,7 @@ export async function GET(
 
     await connectDB();
 
-    const status = await budgetService.getBudgetStatus(params.id, authResult.userId);
+    const status = await budgetService.getBudgetStatus(id, authResult.userId);
 
     if (!status) {
       return NextResponse.json(
