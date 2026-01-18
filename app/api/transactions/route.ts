@@ -1,20 +1,17 @@
-import { NextResponse } from 'next/server';
-import Transaction from '@/lib/db/models/Transaction';
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
+import { ApiResponse } from '@/lib/utils/responses';
+import { validateRequest, validateQueryParams, ValidationSchemas } from '@/lib/utils/validation';
+import Transaction from '@/lib/db/models/Transaction';
 import { createTransaction } from '@/lib/services/transactionService';
 
 // GET /api/transactions - List transactions with filters
 export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
-  // Get query parameters
-  const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type');
-  const accountId = searchParams.get('accountId');
-  const categoryId = searchParams.get('categoryId');
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
-  const limit = parseInt(searchParams.get('limit') || '50');
-  const skip = parseInt(searchParams.get('skip') || '0');
-
+  // Validate query parameters
+  const validation = validateQueryParams(request, ValidationSchemas.transaction.query);
+  if (!validation.success) return validation.response;
+  
+  const { type, accountId, categoryId, startDate, endDate, limit, skip } = validation.data;
+  
   // Build filter
   interface TransactionFilter {
     userId: string;
@@ -26,9 +23,9 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
       $lte?: Date;
     };
   }
-
+  
   const filter: TransactionFilter = { userId: request.userId };
-
+  
   if (type) filter.type = type;
   if (accountId) filter.accountId = accountId;
   if (categoryId) filter.categoryId = categoryId;
@@ -37,7 +34,7 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
     if (startDate) filter.date.$gte = new Date(startDate);
     if (endDate) filter.date.$lte = new Date(endDate);
   }
-
+  
   // Get transactions
   const transactions = await Transaction.find(filter)
     .sort({ date: -1, createdAt: -1 })
@@ -46,97 +43,34 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
     .populate('accountId', 'name type icon color')
     .populate('toAccountId', 'name type icon color')
     .populate('categoryId', 'name icon color');
-
+  
   // Get total count
   const total = await Transaction.countDocuments(filter);
-
-  return NextResponse.json({
-    transactions,
-    total,
-    limit,
-    skip,
-  });
+  
+  return ApiResponse.paginated(transactions, total, limit, skip);
 });
 
 // POST /api/transactions - Create a new transaction
 export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
-  // Parse request body
   const body = await request.json();
-  const {
-    type,
-    amount,
-    description,
-    accountId,
-    toAccountId,
-    categoryId,
-    tags = [],
-    date,
-    attachments = [],
-    aiGenerated = false,
-    metadata = {},
-  } = body;
-
-  // Validate required fields
-  if (!type || !amount || !description || !accountId) {
-    return NextResponse.json(
-      { error: 'Type, amount, description, and accountId are required' },
-      { status: 400 }
-    );
-  }
-
-  // Validate type
-  if (!['expense', 'income', 'transfer'].includes(type)) {
-    return NextResponse.json(
-      { error: 'Type must be expense, income, or transfer' },
-      { status: 400 }
-    );
-  }
-
-  // Validate transfer requirements
-  if (type === 'transfer' && !toAccountId) {
-    return NextResponse.json(
-      { error: 'toAccountId is required for transfers' },
-      { status: 400 }
-    );
-  }
-
-  // Validate category requirement
-  if (type !== 'transfer' && !categoryId) {
-    return NextResponse.json(
-      { error: 'categoryId is required for expense and income transactions' },
-      { status: 400 }
-    );
-  }
-
+  
+  // Validate request body
+  const validation = validateRequest(ValidationSchemas.transaction.create, body);
+  if (!validation.success) return validation.response;
+  
+  const data = validation.data;
+  
   // Create transaction with balance updates
-  const transaction = await createTransaction(request.userId, {
-    type,
-    amount,
-    description,
-    accountId,
-    toAccountId,
-    categoryId,
-    tags,
-    date: date ? new Date(date) : new Date(),
-    attachments,
-    aiGenerated,
-    metadata,
-  });
-
+  const transaction = await createTransaction(request.userId, data as unknown as Parameters<typeof createTransaction>[1]);
+  
   // Populate references
   await transaction.populate('accountId', 'name type icon color');
-  if (toAccountId) {
+  if (data.toAccountId) {
     await transaction.populate('toAccountId', 'name type icon color');
   }
-  if (categoryId) {
+  if (data.categoryId) {
     await transaction.populate('categoryId', 'name icon color');
   }
-
-  return NextResponse.json(
-    {
-      message: 'Transaction created successfully',
-      transaction,
-    },
-    { status: 201 }
-  );
+  
+  return ApiResponse.created(transaction, 'Transaction created successfully');
 });

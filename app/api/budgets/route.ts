@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
+import { ApiResponse } from '@/lib/utils/responses';
+import { validateRequest, validateQueryParams, ValidationSchemas } from '@/lib/utils/validation';
 import budgetService from '@/lib/services/budgetService';
 
 /**
@@ -7,36 +8,33 @@ import budgetService from '@/lib/services/budgetService';
  * List all budgets for the authenticated user
  */
 export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
-  const { searchParams } = new URL(request.url);
-  const isActive = searchParams.get('isActive');
-  const categoryId = searchParams.get('categoryId');
-  const period = searchParams.get('period');
-
+  // Validate query parameters
+  const validation = validateQueryParams(request, ValidationSchemas.budget.query);
+  if (!validation.success) return validation.response;
+  
+  const { isActive, categoryId, period } = validation.data;
+  
   const filters: {
     isActive?: boolean;
     categoryId?: string;
     period?: string;
   } = {};
-
-  if (isActive !== null) {
+  
+  if (isActive !== undefined) {
     filters.isActive = isActive === 'true';
   }
-
+  
   if (categoryId) {
     filters.categoryId = categoryId;
   }
-
+  
   if (period) {
     filters.period = period;
   }
-
+  
   const budgets = await budgetService.getBudgets(request.userId, filters);
-
-  return NextResponse.json({
-    success: true,
-    data: budgets,
-    count: budgets.length,
-  });
+  
+  return ApiResponse.success({ data: budgets, count: budgets.length });
 });
 
 /**
@@ -45,68 +43,23 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
  */
 export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
   const body = await request.json();
-
-  // Validation
-  if (!body.name || !body.amount || !body.period || !body.startDate || !body.endDate) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Missing required fields: name, amount, period, startDate, endDate',
-      },
-      { status: 400 }
-    );
-  }
-
-  if (body.amount <= 0) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Amount must be greater than 0',
-      },
-      { status: 400 }
-    );
-  }
-
-  if (!['daily', 'weekly', 'monthly', 'yearly'].includes(body.period)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Invalid period. Must be: daily, weekly, monthly, or yearly',
-      },
-      { status: 400 }
-    );
-  }
-
-  const startDate = new Date(body.startDate);
-  const endDate = new Date(body.endDate);
-
-  if (endDate <= startDate) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'End date must be after start date',
-      },
-      { status: 400 }
-    );
-  }
-
+  
+  // Validate request body
+  const validation = validateRequest(ValidationSchemas.budget.create, body);
+  if (!validation.success) return validation.response;
+  
+  const data = validation.data;
+  
   const budget = await budgetService.createBudget({
     userId: request.userId,
-    name: body.name,
-    categoryId: body.categoryId,
-    amount: body.amount,
-    period: body.period,
-    startDate,
-    endDate,
-    alertThreshold: body.alertThreshold,
+    name: data.name,
+    categoryId: data.categoryId,
+    amount: data.amount,
+    period: data.period,
+    startDate: new Date(data.startDate),
+    endDate: new Date(data.endDate),
+    alertThreshold: data.alertThreshold,
   });
-
-  return NextResponse.json(
-    {
-      success: true,
-      data: budget,
-      message: 'Budget created successfully',
-    },
-    { status: 201 }
-  );
+  
+  return ApiResponse.created(budget, 'Budget created successfully');
 });

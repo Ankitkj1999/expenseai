@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
+import { ApiResponse } from '@/lib/utils/responses';
 import budgetService from '@/lib/services/budgetService';
 
 /**
@@ -10,23 +10,10 @@ export const GET = withAuthAndDb(async (
   request: AuthenticatedRequest,
   context?: { params: Promise<{ id: string }> }
 ) => {
-  // Await params (Next.js 15 requirement)
   const { id } = await context!.params;
-
+  
   const status = await budgetService.getBudgetStatus(id, request.userId);
-
-  if (!status) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Budget not found',
-      },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    data: status,
-  });
+  if (!status) return ApiResponse.notFound('Budget');
+  
+  return ApiResponse.success(status);
 });

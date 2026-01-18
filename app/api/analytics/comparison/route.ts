@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
+import { ApiResponse } from '@/lib/utils/responses';
+import { validateQueryParams, ValidationSchemas } from '@/lib/utils/validation';
 import analyticsService from '@/lib/services/analyticsService';
 
 /**
@@ -7,39 +8,16 @@ import analyticsService from '@/lib/services/analyticsService';
  * Compare spending between two periods
  */
 export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
-  const { searchParams } = new URL(request.url);
-  const currentPeriod = searchParams.get('currentPeriod') as 'today' | 'week' | 'month' | 'year' || 'month';
-  const previousPeriod = searchParams.get('previousPeriod') as 'today' | 'week' | 'month' | 'year';
-
-  // Validate periods
-  const validPeriods = ['today', 'week', 'month', 'year'];
-  if (!validPeriods.includes(currentPeriod)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Invalid currentPeriod. Must be: today, week, month, or year',
-      },
-      { status: 400 }
-    );
-  }
-
-  if (previousPeriod && !validPeriods.includes(previousPeriod)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Invalid previousPeriod. Must be: today, week, month, or year',
-      },
-      { status: 400 }
-    );
-  }
-
+  // Validate query parameters
+  const validation = validateQueryParams(request, ValidationSchemas.analytics.comparison);
+  if (!validation.success) return validation.response;
+  
+  const { currentPeriod, previousPeriod } = validation.data;
+  
   const comparison = await analyticsService.getComparison(request.userId, {
     currentPeriod,
     previousPeriod,
   });
-
-  return NextResponse.json({
-    success: true,
-    data: comparison,
-  });
+  
+  return ApiResponse.success(comparison);
 });

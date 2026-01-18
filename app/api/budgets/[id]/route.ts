@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
+import { ApiResponse } from '@/lib/utils/responses';
+import { validateRequest, ValidationSchemas } from '@/lib/utils/validation';
 import budgetService from '@/lib/services/budgetService';
 
 /**
@@ -10,25 +11,12 @@ export const GET = withAuthAndDb(async (
   request: AuthenticatedRequest,
   context?: { params: Promise<{ id: string }> }
 ) => {
-  // Await params (Next.js 15 requirement)
   const { id } = await context!.params;
-
+  
   const budget = await budgetService.getBudgetById(id, request.userId);
-
-  if (!budget) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Budget not found',
-      },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    data: budget,
-  });
+  if (!budget) return ApiResponse.notFound('Budget');
+  
+  return ApiResponse.success(budget);
 });
 
 /**
@@ -39,70 +27,26 @@ export const PUT = withAuthAndDb(async (
   request: AuthenticatedRequest,
   context?: { params: Promise<{ id: string }> }
 ) => {
-  // Await params (Next.js 15 requirement)
   const { id } = await context!.params;
-
   const body = await request.json();
-
-  // Validation for dates if provided
-  if (body.startDate && body.endDate) {
-    const startDate = new Date(body.startDate);
-    const endDate = new Date(body.endDate);
-
-    if (endDate <= startDate) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'End date must be after start date',
-        },
-        { status: 400 }
-      );
-    }
+  
+  // Validate request body
+  const validation = validateRequest(ValidationSchemas.budget.update, body);
+  if (!validation.success) return validation.response;
+  
+  // Convert date strings to Date objects
+  const updateData: Record<string, unknown> = { ...validation.data };
+  if (validation.data.startDate) {
+    updateData.startDate = new Date(validation.data.startDate);
   }
-
-  // Validation for amount if provided
-  if (body.amount !== undefined && body.amount <= 0) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Amount must be greater than 0',
-      },
-      { status: 400 }
-    );
+  if (validation.data.endDate) {
+    updateData.endDate = new Date(validation.data.endDate);
   }
-
-  // Validation for period if provided
-  if (body.period && !['daily', 'weekly', 'monthly', 'yearly'].includes(body.period)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Invalid period. Must be: daily, weekly, monthly, or yearly',
-      },
-      { status: 400 }
-    );
-  }
-
-  const budget = await budgetService.updateBudget(
-    id,
-    request.userId,
-    body
-  );
-
-  if (!budget) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Budget not found',
-      },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    data: budget,
-    message: 'Budget updated successfully',
-  });
+  
+  const budget = await budgetService.updateBudget(id, request.userId, updateData);
+  if (!budget) return ApiResponse.notFound('Budget');
+  
+  return ApiResponse.successWithMessage(budget, 'Budget updated successfully');
 });
 
 /**
@@ -113,23 +57,10 @@ export const DELETE = withAuthAndDb(async (
   request: AuthenticatedRequest,
   context?: { params: Promise<{ id: string }> }
 ) => {
-  // Await params (Next.js 15 requirement)
   const { id } = await context!.params;
-
+  
   const deleted = await budgetService.deleteBudget(id, request.userId);
-
-  if (!deleted) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Budget not found',
-      },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    message: 'Budget deleted successfully',
-  });
+  if (!deleted) return ApiResponse.notFound('Budget');
+  
+  return ApiResponse.successWithMessage({}, 'Budget deleted successfully');
 });
