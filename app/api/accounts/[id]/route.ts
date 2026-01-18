@@ -1,169 +1,105 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/db/mongodb';
+import { NextResponse } from 'next/server';
 import Account from '@/lib/db/models/Account';
-import { authenticate } from '@/lib/middleware/auth';
-
-// PUT /api/accounts/[id] - Update an account
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Await params (Next.js 15 requirement)
-    const { id } = await params;
-    
-    // Authenticate user
-    const auth = await authenticate(request);
-    
-    if (!auth.authenticated || !auth.userId) {
-      return NextResponse.json(
-        { error: auth.error || 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const { name, type, balance, currency, icon, color, isActive } = body;
-
-    // Validate type if provided
-    if (type) {
-      const validTypes = ['cash', 'bank', 'credit', 'wallet'];
-      if (!validTypes.includes(type)) {
-        return NextResponse.json(
-          { error: 'Invalid account type' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Connect to database
-    await connectDB();
-
-    // Find and update account
-    const account = await Account.findOneAndUpdate(
-      { _id: id, userId: auth.userId },
-      {
-        ...(name && { name }),
-        ...(type && { type }),
-        ...(balance !== undefined && { balance }),
-        ...(currency && { currency }),
-        ...(icon && { icon }),
-        ...(color && { color }),
-        ...(isActive !== undefined && { isActive }),
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!account) {
-      return NextResponse.json(
-        { error: 'Account not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: 'Account updated successfully',
-      account,
-    });
-  } catch (error) {
-    console.error('Update account error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE /api/accounts/[id] - Delete an account (soft delete)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Await params (Next.js 15 requirement)
-    const { id } = await params;
-    
-    // Authenticate user
-    const auth = await authenticate(request);
-    
-    if (!auth.authenticated || !auth.userId) {
-      return NextResponse.json(
-        { error: auth.error || 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Connect to database
-    await connectDB();
-
-    // Soft delete by setting isActive to false
-    const account = await Account.findOneAndUpdate(
-      { _id: id, userId: auth.userId },
-      { isActive: false },
-      { new: true }
-    );
-
-    if (!account) {
-      return NextResponse.json(
-        { error: 'Account not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: 'Account deleted successfully',
-    });
-  } catch (error) {
-    console.error('Delete account error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
+import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
 
 // GET /api/accounts/[id] - Get a specific account
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Await params (Next.js 15 requirement)
-    const { id } = await params;
-    
-    // Authenticate user
-    const auth = await authenticate(request);
-    
-    if (!auth.authenticated || !auth.userId) {
-      return NextResponse.json(
-        { error: auth.error || 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+export const GET = withAuthAndDb(async (
+  request: AuthenticatedRequest,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  // Await params (Next.js 15 requirement)
+  const { id } = await context!.params;
 
-    // Connect to database
-    await connectDB();
+  // Find account
+  const account = await Account.findOne({
+    _id: id,
+    userId: request.userId,
+  });
 
-    // Find account
-    const account = await Account.findOne({
-      _id: id,
-      userId: auth.userId,
-    });
-
-    if (!account) {
-      return NextResponse.json(
-        { error: 'Account not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ account });
-  } catch (error) {
-    console.error('Get account error:', error);
+  if (!account) {
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Account not found' },
+      { status: 404 }
     );
   }
-}
+
+  return NextResponse.json({ account });
+});
+
+// PUT /api/accounts/[id] - Update an account
+export const PUT = withAuthAndDb(async (
+  request: AuthenticatedRequest,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  // Await params (Next.js 15 requirement)
+  const { id } = await context!.params;
+
+  // Parse request body
+  const body = await request.json();
+  const { name, type, balance, currency, icon, color, isActive } = body;
+
+  // Validate type if provided
+  if (type) {
+    const validTypes = ['cash', 'bank', 'credit', 'wallet'];
+    if (!validTypes.includes(type)) {
+      return NextResponse.json(
+        { error: 'Invalid account type' },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Find and update account
+  const account = await Account.findOneAndUpdate(
+    { _id: id, userId: request.userId },
+    {
+      ...(name && { name }),
+      ...(type && { type }),
+      ...(balance !== undefined && { balance }),
+      ...(currency && { currency }),
+      ...(icon && { icon }),
+      ...(color && { color }),
+      ...(isActive !== undefined && { isActive }),
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (!account) {
+    return NextResponse.json(
+      { error: 'Account not found' },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({
+    message: 'Account updated successfully',
+    account,
+  });
+});
+
+// DELETE /api/accounts/[id] - Delete an account (soft delete)
+export const DELETE = withAuthAndDb(async (
+  request: AuthenticatedRequest,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  // Await params (Next.js 15 requirement)
+  const { id } = await context!.params;
+
+  // Soft delete by setting isActive to false
+  const account = await Account.findOneAndUpdate(
+    { _id: id, userId: request.userId },
+    { isActive: false },
+    { new: true }
+  );
+
+  if (!account) {
+    return NextResponse.json(
+      { error: 'Account not found' },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({
+    message: 'Account deleted successfully',
+  });
+});

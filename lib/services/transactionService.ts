@@ -128,8 +128,12 @@ export async function updateTransaction(
   session.startTransaction();
 
   try {
-    // Get original transaction
-    const originalTransaction = await Transaction.findOne({ _id: transactionId, userId });
+    // Get original transaction within the session to prevent race conditions
+    const originalTransaction = await Transaction.findOne({
+      _id: transactionId,
+      userId
+    }).session(session);
+    
     if (!originalTransaction) {
       throw new Error('Transaction not found');
     }
@@ -220,8 +224,12 @@ export async function deleteTransaction(
   session.startTransaction();
 
   try {
-    // Get transaction
-    const transaction = await Transaction.findOne({ _id: transactionId, userId });
+    // Get transaction within the session to prevent race conditions
+    const transaction = await Transaction.findOne({
+      _id: transactionId,
+      userId
+    }).session(session);
+    
     if (!transaction) {
       throw new Error('Transaction not found');
     }

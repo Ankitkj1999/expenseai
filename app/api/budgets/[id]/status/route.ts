@@ -1,51 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticate } from '@/lib/middleware/auth';
+import { NextResponse } from 'next/server';
+import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
 import budgetService from '@/lib/services/budgetService';
-import connectDB from '@/lib/db/mongodb';
 
 /**
  * GET /api/budgets/[id]/status
  * Get budget usage status with spending information
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Await params (Next.js 15 requirement)
-    const { id } = await params;
-    
-    const authResult = await authenticate(req);
-    if (!authResult.authenticated || !authResult.userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withAuthAndDb(async (
+  request: AuthenticatedRequest,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  // Await params (Next.js 15 requirement)
+  const { id } = await context!.params;
 
-    await connectDB();
+  const status = await budgetService.getBudgetStatus(id, request.userId);
 
-    const status = await budgetService.getBudgetStatus(id, authResult.userId);
-
-    if (!status) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Budget not found',
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: status,
-    });
-  } catch (error) {
-    console.error('Error fetching budget status:', error);
+  if (!status) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to fetch budget status',
+        error: 'Budget not found',
       },
-      { status: 500 }
+      { status: 404 }
     );
   }
-}
+
+  return NextResponse.json({
+    success: true,
+    data: status,
+  });
+});
