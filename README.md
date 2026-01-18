@@ -52,3 +52,52 @@ Since I am supposed to put more emphasis on making this interesting and incredib
 
 I will look for ideas and understanding of current dominant apps, so I understand what mostly works. And some new underdogs.
 So these are my thoughts. I will keep you posted on any meaningful progress, since it's good to be in a feedback loop, and whenever you think I need improvement or change, then please point it out.
+
+
+## **✅ CONFIRMED - Vercel AI SDK can handle ALL of this:**
+
+---
+
+### **Your Use Cases:**
+
+| Feature | Vercel AI SDK Capability | Status |
+|---------|-------------------------|--------|
+| **Chat-based expense logging** | `streamText` + tools | ✅ YES |
+| **Create transactions via AI** | Function calling tools | ✅ YES |
+| **Create accounts/budgets/categories** | Function calling tools | ✅ YES |
+| **Analyze expenses (text responses)** | `streamText` | ✅ YES |
+| **Show charts/graphs** | Generative UI (`streamUI`) | ✅ YES |
+| **Receipt image → transaction** | Vision support (Gemini 2.0) | ✅ YES |
+| **Structured data extraction** | `generateObject` with Zod | ✅ YES |
+| **Streaming responses** | Built-in streaming | ✅ YES |
+| **MongoDB integration** | Via your tool functions | ✅ YES |
+
+---
+
+## **One SDK, All Features:**
+
+```typescript
+import { 
+  streamText,      // Chat & analysis
+  streamUI,        // Charts & components
+  generateObject   // Receipt extraction
+} from 'ai';
+
+import { google } from '@ai-sdk/google';
+```
+
+---
+
+## **Final Confirmation:**
+
+**YES** - Vercel AI SDK (`ai` package) + Google AI SDK (`@ai-sdk/google`) handles:
+- ✅ Text chat
+- ✅ Transaction creation
+- ✅ Data visualization (Generative UI)
+- ✅ Image analysis (receipts)
+- ✅ All CRUD operations via tools
+- ✅ Works with Gemini 2.0 Flash
+
+**You're good to go with just this stack!** 🚀
+
+No need for LangChain, no need for custom chat UI

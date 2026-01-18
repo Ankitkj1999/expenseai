@@ -66,7 +66,14 @@ class BudgetService {
       period?: string;
     }
   ): Promise<IBudget[]> {
-    const query: any = { userId: new mongoose.Types.ObjectId(userId) };
+    interface BudgetQuery {
+      userId: mongoose.Types.ObjectId;
+      isActive?: boolean;
+      categoryId?: mongoose.Types.ObjectId;
+      period?: string;
+    }
+
+    const query: BudgetQuery = { userId: new mongoose.Types.ObjectId(userId) };
 
     if (filters?.isActive !== undefined) {
       query.isActive = filters.isActive;
@@ -107,7 +114,18 @@ class BudgetService {
     userId: string,
     updates: UpdateBudgetInput
   ): Promise<IBudget | null> {
-    const updateData: any = { ...updates };
+    interface BudgetUpdateData {
+      name?: string;
+      categoryId?: mongoose.Types.ObjectId | string;
+      amount?: number;
+      period?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+      startDate?: Date;
+      endDate?: Date;
+      alertThreshold?: number;
+      isActive?: boolean;
+    }
+
+    const updateData: BudgetUpdateData = { ...updates };
 
     if (updates.categoryId) {
       updateData.categoryId = new mongoose.Types.ObjectId(updates.categoryId);
@@ -145,7 +163,17 @@ class BudgetService {
     if (!budget) return null;
 
     // Calculate spent amount within budget period
-    const query: any = {
+    interface TransactionQuery {
+      userId: mongoose.Types.ObjectId;
+      type: string;
+      date: {
+        $gte: Date;
+        $lte: Date;
+      };
+      categoryId?: mongoose.Types.ObjectId;
+    }
+
+    const query: TransactionQuery = {
       userId: new mongoose.Types.ObjectId(userId),
       type: 'expense',
       date: {
