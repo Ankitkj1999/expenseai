@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+// Import all models to ensure they're registered with Mongoose
+// This prevents "Model not registered" errors in serverless environments
+import '@/lib/db/models';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -27,6 +30,10 @@ if (!global.mongoose) {
   global.mongoose = cached;
 }
 
+/**
+ * Connects to MongoDB and ensures all models are registered
+ * Uses connection caching to prevent multiple connections in serverless environments
+ */
 async function connectDB(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
