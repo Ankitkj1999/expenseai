@@ -4,6 +4,47 @@ import connectDB from '@/lib/db/mongodb';
 import mongoose from 'mongoose';
 
 /**
+ * Get transactions with filters
+ */
+export async function getTransactions(
+  userId: string,
+  filters: {
+    type?: string;
+    accountId?: string;
+    categoryId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  } = {},
+  limit: number = 50,
+  skip: number = 0
+): Promise<{ transactions: ITransaction[]; total: number }> {
+  await connectDB();
+
+  const query: Record<string, unknown> = { userId };
+
+  if (filters.type) query.type = filters.type;
+  if (filters.accountId) query.accountId = filters.accountId;
+  if (filters.categoryId) query.categoryId = filters.categoryId;
+  if (filters.startDate || filters.endDate) {
+    query.date = {};
+    if (filters.startDate) (query.date as Record<string, unknown>).$gte = filters.startDate;
+    if (filters.endDate) (query.date as Record<string, unknown>).$lte = filters.endDate;
+  }
+
+  const transactions = await Transaction.find(query)
+    .sort({ date: -1, createdAt: -1 })
+    .limit(limit)
+    .skip(skip)
+    .populate('accountId', 'name type icon color')
+    .populate('toAccountId', 'name type icon color')
+    .populate('categoryId', 'name icon color');
+
+  const total = await Transaction.countDocuments(query);
+
+  return { transactions, total };
+}
+
+/**
  * Create a transaction and update account balance(s)
  */
 export async function createTransaction(

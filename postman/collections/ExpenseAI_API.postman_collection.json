@@ -53,7 +53,7 @@
     {
       "name": "Budgets",
       "item": [
-        {"name": "List All Budgets", "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"], "query": [{"key": "isActive", "value": "true", "disabled": true}, {"key": "categoryId", "value": "", "disabled": true}, {"key": "period", "value": "monthly", "disabled": true}]}, "description": "Get all budgets with optional filters.\n\n**Query Parameters:**\n- `isActive`: Filter by active status (true/false)\n- `categoryId`: Filter by category\n- `period`: Filter by period (daily, weekly, monthly, yearly)"}, "response": []},
+        {"name": "List All Budgets", "request": {"method": "POST", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"], "query": [{"key": "isActive", "value": "true", "disabled": true}, {"key": "categoryId", "value": "", "disabled": true}, {"key": "period", "value": "monthly", "disabled": true}]}, "description": "Get all budgets with optional filters.\n\n**Query Parameters:**\n- `isActive`: Filter by active status (true/false)\n- `categoryId`: Filter by category\n- `period`: Filter by period (daily, weekly, monthly, yearly)"}, "response": []},
         {"name": "Create Budget", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}], "body": {"mode": "raw", "raw": "{\n  \"name\": \"Monthly Groceries\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"amount\": 10000,\n  \"period\": \"monthly\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"endDate\": \"2024-01-31T23:59:59.999Z\",\n  \"alertThreshold\": 80\n}"}, "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"]}, "description": "Create a new budget.\n\n**Required:**\n- name, amount, period, startDate, endDate\n\n**Optional:**\n- categoryId (null for overall budget)\n- alertThreshold (default: 80)"}, "response": []},
         {"name": "Create Overall Budget", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json", "type": "text"}], "body": {"mode": "raw", "raw": "{\n  \"name\": \"Monthly Spending Limit\",\n  \"amount\": 50000,\n  \"period\": \"monthly\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"endDate\": \"2024-01-31T23:59:59.999Z\",\n  \"alertThreshold\": 90\n}"}, "url": {"raw": "{{baseUrl}}/api/budgets", "host": ["{{baseUrl}}"], "path": ["api", "budgets"]}, "description": "Create an overall budget without category restriction."}, "response": []},
         {"name": "Get Budget by ID", "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/budgets/{{budgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "budgets", "{{budgetId}}"]}, "description": "Get details of a specific budget."}, "response": []},
@@ -73,6 +73,129 @@
         {"name": "Get Comparison", "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/api/analytics/comparison?currentPeriod=month", "host": ["{{baseUrl}}"], "path": ["api", "analytics", "comparison"], "query": [{"key": "currentPeriod", "value": "month"}, {"key": "previousPeriod", "value": "month", "disabled": true}]}, "description": "Compare spending between two periods.\n\n**Query Parameters:**\n- `currentPeriod`: today, week, month, year (default: month)\n- `previousPeriod`: today, week, month, year (default: same as current)\n\n**Returns:**\n- current: Summary for current period\n- previous: Summary for previous period\n- change: Change metrics\n  - income: { amount, percentage }\n  - expense: { amount, percentage }\n  - net: { amount, percentage }"}, "response": []}
       ],
       "description": "Analytics and insights"
+    },
+    {
+      "name": "AI Chat",
+      "item": [
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"What's my spending this month?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Send a message to the AI assistant. The AI can:\n- Answer questions about your spending\n- Create transactions from natural language\n- Get budget status\n- Analyze spending patterns\n\n**Example Messages:**\n- \"I spent $50 on groceries\"\n- \"What's my spending this month?\"\n- \"Show me my budget status\"\n- \"Where is my money going?\"\n- \"Create an expense of $25 for coffee\"\n\n**Request Body:**\n- `messages`: Array of message objects with `role` and `content`\n- `sessionId` (optional): Continue an existing chat session\n\n**Response:**\nStreaming text response from the AI assistant.\n\n**Note:** Make sure you have:\n- Logged in (authentication cookie)\n- Created at least one account\n- Created some categories\n- Optionally, some existing transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Transaction via AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"I spent $75 on groceries at Walmart\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Create a transaction using natural language.\n\nThe AI will:\n1. Extract the amount, description, and category\n2. Use the createTransaction tool\n3. Confirm the transaction was created\n\n**Example Phrases:**\n- \"I spent $50 on groceries\"\n- \"Add an expense of $25 for coffee\"\n- \"I earned $1000 from freelancing\"\n- \"Transfer $500 from checking to savings\""
+          },
+          "response": []
+        },
+        {
+          "name": "Get Spending Summary via AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"What's my total spending this month?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Ask the AI about your spending summary.\n\n**Example Questions:**\n- \"What's my spending this month?\"\n- \"How much did I spend this week?\"\n- \"What's my income vs expenses?\"\n- \"Show me my financial summary\""
+          },
+          "response": []
+        },
+        {
+          "name": "Get Category Breakdown via AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Where is my money going? Show me category breakdown\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Ask the AI for category-wise spending breakdown.\n\n**Example Questions:**\n- \"Where is my money going?\"\n- \"Show me spending by category\"\n- \"What categories am I spending most on?\"\n- \"Break down my expenses\""
+          },
+          "response": []
+        },
+        {
+          "name": "Check Budget Status via AI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Am I over budget? Show me my budget status\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"]
+            },
+            "description": "Ask the AI about your budget status.\n\n**Example Questions:**\n- \"Am I over budget?\"\n- \"Show me my budget status\"\n- \"How much budget do I have left?\"\n- \"Check my spending limits\""
+          },
+          "response": []
+        },
+        {
+          "name": "Get Chat Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai", "chat"],
+              "query": [
+                {"key": "sessionId", "value": "{{sessionId}}", "disabled": true}
+              ]
+            },
+            "description": "Get chat session history.\n\n**Without sessionId:** Returns list of all your chat sessions (last 10)\n**With sessionId:** Returns specific session with all messages\n\n**Response:**\n- sessions: Array of chat sessions\n- Each session contains:\n  - _id: Session ID\n  - userId: Your user ID\n  - messages: Array of messages\n  - createdAt: Creation timestamp\n  - updatedAt: Last update timestamp"
+          },
+          "response": []
+        }
+      ],
+      "description": "AI-powered chat interface with tool calling capabilities"
     }
   ],
   "variable": [
@@ -81,6 +204,7 @@
     {"key": "toAccountId", "value": "", "type": "string"},
     {"key": "categoryId", "value": "", "type": "string"},
     {"key": "transactionId", "value": "", "type": "string"},
-    {"key": "budgetId", "value": "", "type": "string"}
+    {"key": "budgetId", "value": "", "type": "string"},
+    {"key": "sessionId", "value": "", "type": "string"}
   ]
 }
