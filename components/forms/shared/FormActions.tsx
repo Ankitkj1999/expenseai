@@ -17,13 +17,23 @@ export function FormActions({
   cancelLabel = 'Cancel',
 }: FormActionsProps) {
   return (
-    <div className="flex justify-end gap-2 pt-4">
+    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-6 border-t">
       {onCancel && (
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel} 
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
           {cancelLabel}
         </Button>
       )}
-      <Button type="submit" disabled={isSubmitting}>
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+        className="w-full sm:w-auto"
+      >
         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isSubmitting ? 'Saving...' : submitLabel}
       </Button>

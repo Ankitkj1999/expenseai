@@ -14,12 +14,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { CategorySelect } from './shared/CategorySelect';
 import { AccountSelect } from './shared/AccountSelect';
 import { DatePicker } from './shared/DatePicker';
-import { FormActions } from './shared/FormActions';
+import { Button } from '@/components/ui/button';
 import { useCreateTransaction, useUpdateTransaction } from '@/lib/hooks/useTransactions';
+import { TrendingDown, TrendingUp, ArrowRightLeft, Loader2 } from 'lucide-react';
 import type { TransactionResponse, TransactionType } from '@/types';
 
 // Validation schema
@@ -33,7 +34,6 @@ const transactionSchema = z.object({
   date: z.date(),
   notes: z.string().max(1000).optional(),
 }).refine((data) => {
-  // For transfers, toAccountId is required
   if (data.type === 'transfer') {
     return !!data.toAccountId;
   }
@@ -42,7 +42,6 @@ const transactionSchema = z.object({
   message: 'Destination account is required for transfers',
   path: ['toAccountId'],
 }).refine((data) => {
-  // For expense/income, categoryId is required
   if (data.type !== 'transfer') {
     return !!data.categoryId;
   }
@@ -134,79 +133,105 @@ export function TransactionForm({
     }
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Transaction Type Tabs */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Transaction Type */}
         <FormField
           control={form.control}
           name="type"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Transaction Type</FormLabel>
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-medium">Transaction Type</FormLabel>
               <FormControl>
-                <Tabs
+                <ToggleGroup
+                  type="single"
                   value={field.value}
-                  onValueChange={(value) => field.onChange(value as TransactionType)}
+                  onValueChange={(value) => {
+                    if (value) field.onChange(value as TransactionType);
+                  }}
+                  className="grid grid-cols-3 gap-3"
                 >
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="expense">Expense</TabsTrigger>
-                    <TabsTrigger value="income">Income</TabsTrigger>
-                    <TabsTrigger value="transfer">Transfer</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                  <ToggleGroupItem
+                    value="expense"
+                    className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-red-500/10 data-[state=on]:text-red-600 data-[state=on]:border-red-500 border-2"
+                  >
+                    <TrendingDown className="h-5 w-5" />
+                    <span className="text-sm font-medium">Expense</span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="income"
+                    className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-green-500/10 data-[state=on]:text-green-600 data-[state=on]:border-green-500 border-2"
+                  >
+                    <TrendingUp className="h-5 w-5" />
+                    <span className="text-sm font-medium">Income</span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="transfer"
+                    className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-blue-500/10 data-[state=on]:text-blue-600 data-[state=on]:border-blue-500 border-2"
+                  >
+                    <ArrowRightLeft className="h-5 w-5" />
+                    <span className="text-sm font-medium">Transfer</span>
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Amount and Date (2-column on desktop) */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Amount */}
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-medium">Amount</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0"
+                  className="text-3xl font-bold h-16 px-4"
+                  {...field}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Date</FormLabel>
-                <FormControl>
-                  <DatePicker value={field.value} onChange={field.onChange} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {/* Date */}
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-medium">Date</FormLabel>
+              <FormControl>
+                <DatePicker value={field.value} onChange={field.onChange} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Description */}
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-medium">Description</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Grocery shopping" {...field} />
+                <Input 
+                  placeholder="e.g., Grocery shopping" 
+                  className="h-11"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -218,8 +243,8 @@ export function TransactionForm({
           control={form.control}
           name="accountId"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-medium">
                 {transactionType === 'transfer' ? 'From Account' : 'Account'}
               </FormLabel>
               <FormControl>
@@ -240,8 +265,8 @@ export function TransactionForm({
             control={form.control}
             name="toAccountId"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>To Account</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">To Account</FormLabel>
                 <FormControl>
                   <AccountSelect
                     value={field.value}
@@ -262,8 +287,8 @@ export function TransactionForm({
             control={form.control}
             name="categoryId"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Category</FormLabel>
                 <FormControl>
                   <CategorySelect
                     value={field.value}
@@ -283,16 +308,16 @@ export function TransactionForm({
           control={form.control}
           name="notes"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
+            <FormItem className="space-y-3">
+              <FormLabel className="text-base font-medium">Notes (Optional)</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Add any additional notes..."
-                  className="resize-none"
+                  className="resize-none min-h-[100px]"
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
+              <FormDescription className="text-sm">
                 Add any additional details about this transaction
               </FormDescription>
               <FormMessage />
@@ -301,11 +326,27 @@ export function TransactionForm({
         />
 
         {/* Form Actions */}
-        <FormActions
-          isSubmitting={form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending}
-          onCancel={onCancel}
-          submitLabel={mode === 'create' ? 'Create Transaction' : 'Update Transaction'}
-        />
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t">
+          {onCancel && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onCancel} 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto h-11"
+            >
+              Cancel
+            </Button>
+          )}
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full sm:w-auto h-11"
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Saving...' : (mode === 'create' ? 'Create Transaction' : 'Update Transaction')}
+          </Button>
+        </div>
       </form>
     </Form>
   );
