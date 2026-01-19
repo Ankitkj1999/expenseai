@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { AuthGuard } from '@/components/auth';
 import { TransactionCard } from '@/components/transactions/TransactionCard';
 import { TransactionDialog } from '@/components/forms/TransactionDialog';
 import { QuickAddButton } from '@/components/transactions/QuickAddButton';
@@ -12,7 +11,7 @@ import { AlertCircle, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { TransactionResponse } from '@/types';
 
-function TransactionsPageContent() {
+export default function TransactionsPage() {
   const { data: transactions = [], isLoading, error } = useTransactions();
   const deleteTransactionMutation = useDeleteTransaction();
   const [editingTransaction, setEditingTransaction] = useState<TransactionResponse | null>(null);
@@ -110,13 +109,5 @@ function TransactionsPageContent() {
         />
       )}
     </div>
-  );
-}
-
-export default function TransactionsPage() {
-  return (
-    <AuthGuard>
-      <TransactionsPageContent />
-    </AuthGuard>
   );
 }
