@@ -2,24 +2,18 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
+  IconBrain,
+  IconLayoutDashboard,
+  IconReceipt,
+  IconWallet,
+  IconChartPie,
+  IconRepeat,
+  IconTarget,
+  IconMessageCircle,
   IconSettings,
-  IconUsers,
+  IconHelp,
 } from "@tabler/icons-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -32,125 +26,68 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/lib/contexts/AuthContext"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+
+  const navMain = [
     {
       title: "Dashboard",
-      url: "#",
-      icon: IconDashboard,
+      url: "/dashboard",
+      icon: IconLayoutDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Transactions",
+      url: "/transactions",
+      icon: IconReceipt,
+    },
+    {
+      title: "Accounts",
+      url: "/accounts",
+      icon: IconWallet,
     },
     {
       title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
+      url: "/analytics",
+      icon: IconChartPie,
     },
     {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
+      title: "Budgets",
+      url: "/budgets",
+      icon: IconTarget,
     },
     {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
+      title: "Recurring",
+      url: "/recurring",
+      icon: IconRepeat,
     },
-  ],
-  navClouds: [
+  ];
+
+  const navSecondary = [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "AI Chat",
+      url: "/chat",
+      icon: IconMessageCircle,
     },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: IconSettings,
     },
     {
-      title: "Get Help",
-      url: "#",
+      title: "Help",
+      url: "/help",
       icon: IconHelp,
     },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
-}
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const userData = {
+    name: user?.email?.split('@')[0] || "User",
+    email: user?.email || "user@example.com",
+    avatar: "/avatars/user.jpg",
+  };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -160,21 +97,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+              <a href="/dashboard">
+                <IconBrain className="!size-5 text-primary" />
+                <span className="text-base font-semibold">ExpenseAI</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navMain} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
   )
