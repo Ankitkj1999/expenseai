@@ -1,0 +1,74 @@
+'use client';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { accountsApi, type Account, type CreateAccountRequest, type UpdateAccountRequest } from '@/lib/api/accounts';
+import { queryKeys } from '@/lib/constants/queryKeys';
+import { toast } from 'sonner';
+
+/**
+ * Hook to fetch all accounts
+ */
+export function useAccounts() {
+  return useQuery({
+    queryKey: queryKeys.accounts,
+    queryFn: accountsApi.list,
+  });
+}
+
+/**
+ * Hook to create a new account
+ */
+export function useCreateAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateAccountRequest) => accountsApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
+      toast.success('Account created successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Failed to create account:', error);
+      toast.error('Failed to create account');
+    },
+  });
+}
+
+/**
+ * Hook to update an account
+ */
+export function useUpdateAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateAccountRequest }) =>
+      accountsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
+      toast.success('Account updated successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Failed to update account:', error);
+      toast.error('Failed to update account');
+    },
+  });
+}
+
+/**
+ * Hook to delete an account
+ */
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => accountsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
+      toast.success('Account deleted successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Failed to delete account:', error);
+      toast.error('Failed to delete account');
+    },
+  });
+}
