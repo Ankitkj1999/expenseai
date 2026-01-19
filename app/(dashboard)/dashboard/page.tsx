@@ -3,6 +3,7 @@
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { DataTable } from '@/components/data-table';
 import { SectionCards } from '@/components/section-cards';
+import { AIInsights } from '@/components/dashboard/AIInsights';
 
 export default function DashboardPage() {
   // TODO: Fetch real transaction data from API
@@ -59,9 +60,19 @@ export default function DashboardPage() {
       {/* Summary Cards */}
       <SectionCards />
 
-      {/* Spending Trend Chart */}
+      {/* Chart and AI Insights Row */}
       <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          {/* Spending Trend Chart */}
+          <div className="w-full">
+            <ChartAreaInteractive />
+          </div>
+
+          {/* AI Insights */}
+          <div className="w-full">
+            <AIInsights />
+          </div>
+        </div>
       </div>
 
       {/* Recent Transactions Table */}

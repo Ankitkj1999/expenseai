@@ -35,18 +35,18 @@ export function TransactionDialog({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0">
-        <div className="px-6 py-6 space-y-6">
-          <SheetHeader className="space-y-2">
-            <SheetTitle className="text-2xl font-semibold">
-              {mode === 'create' ? 'Add Transaction' : 'Edit Transaction'}
-            </SheetTitle>
-            <SheetDescription className="text-base text-muted-foreground">
-              {mode === 'create'
-                ? 'Record a new income, expense, or transfer'
-                : 'Update transaction details'}
-            </SheetDescription>
-          </SheetHeader>
+      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto px-6">
+        <SheetHeader className="space-y-2 pb-6 pt-6">
+          <SheetTitle className="text-2xl">
+            {mode === 'create' ? 'Add Transaction' : 'Edit Transaction'}
+          </SheetTitle>
+          <SheetDescription>
+            {mode === 'create'
+              ? 'Record a new income, expense, or transfer'
+              : 'Update transaction details'}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="pb-6">
           <TransactionForm
             mode={mode}
             initialData={initialData}
