@@ -1,10 +1,18 @@
 import { api } from './client';
 import type {
   TransactionResponse,
-  TransactionsListResponse,
   CreateTransactionRequest,
   UpdateTransactionRequest,
 } from '@/types';
+
+interface PaginatedTransactionResponse {
+  success: boolean;
+  data: TransactionResponse[];
+  total: number;
+  limit: number;
+  skip: number;
+  count: number;
+}
 
 /**
  * Transaction API functions
@@ -14,8 +22,8 @@ export const transactionsApi = {
    * Get all transactions
    */
   list: async (): Promise<TransactionResponse[]> => {
-    const response = await api.get<TransactionsListResponse>('transactions');
-    return response.data.transactions;
+    const response = await api.get<PaginatedTransactionResponse>('transactions');
+    return response.data.data;
   },
 
   /**

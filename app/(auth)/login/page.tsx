@@ -40,10 +40,13 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
+    
     try {
       await login(data.email, data.password);
       toast.success('Login successful!');
-      router.push('/dashboard');
+      
+      // Use replace instead of push to prevent back navigation to login
+      router.replace('/dashboard');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Invalid email or password';
       toast.error(message);

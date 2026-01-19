@@ -8,6 +8,7 @@ import { hashPassword, generateToken } from '@/lib/utils/auth';
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  name: z.string().optional(), // Accept name but don't store it yet
 });
 
 export const POST = withDb(async (request: NextRequest) => {
@@ -51,12 +52,13 @@ export const POST = withDb(async (request: NextRequest) => {
   // Create response with HTTP-only cookie
   const response = NextResponse.json(
     {
-      message: 'User registered successfully',
-      user: {
+      success: true,
+      data: {
         id: user._id,
         email: user.email,
         createdAt: user.createdAt,
       },
+      message: 'User registered successfully',
     },
     { status: 201 }
   );

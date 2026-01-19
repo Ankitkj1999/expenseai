@@ -52,12 +52,13 @@ export const POST = withDb(async (request: NextRequest) => {
   // Create response with HTTP-only cookie
   const response = NextResponse.json(
     {
-      message: 'Login successful',
-      user: {
+      success: true,
+      data: {
         id: user._id,
         email: user.email,
         createdAt: user.createdAt,
       },
+      message: 'Login successful',
     },
     { status: 200 }
   );

@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     // Return user data (password is already excluded by middleware)
     return NextResponse.json(
       {
-        user: {
+        success: true,
+        data: {
           id: authResult.user._id,
           email: authResult.user.email,
           createdAt: authResult.user.createdAt,
