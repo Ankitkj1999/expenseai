@@ -10,6 +10,7 @@ import Account from './Account';
 import Category from './Category';
 import Transaction from './Transaction';
 import Budget from './Budget';
+import RecurringTransaction from './RecurringTransaction';
 import ChatSession from './ChatSession';
 
 // Export all models for convenient importing
@@ -19,6 +20,7 @@ export {
   Category,
   Transaction,
   Budget,
+  RecurringTransaction,
   ChatSession,
 };
 
@@ -29,5 +31,6 @@ export default {
   Category,
   Transaction,
   Budget,
+  RecurringTransaction,
   ChatSession,
 };

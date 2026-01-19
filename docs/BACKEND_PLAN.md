@@ -103,7 +103,92 @@ A Next.js full-stack application using MongoDB for an AI-powered expense trackin
 }
 ```
 
-#### 6. **chat_sessions**
+#### 6. **recurring_transactions**
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  type: String, // "expense", "income"
+  amount: Number,
+  description: String,
+  accountId: ObjectId,
+  categoryId: ObjectId,
+  frequency: String, // "daily", "weekly", "monthly", "yearly"
+  interval: Number, // e.g., 2 for "every 2 months"
+  startDate: Date,
+  endDate: Date, // optional, null for infinite recurrence
+  nextOccurrence: Date, // when to create next transaction
+  lastGeneratedDate: Date, // last time transaction was created
+  isActive: Boolean,
+  metadata: {
+    dayOfMonth: Number, // for monthly (e.g., 1st, 15th)
+    dayOfWeek: Number, // for weekly (0-6, Sunday-Saturday)
+    notes: String
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### 7. **goals**
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  name: String, // "Emergency Fund", "Vacation", "New Laptop"
+  type: String, // "savings", "debt_payoff", "purchase"
+  targetAmount: Number,
+  currentAmount: Number,
+  deadline: Date, // optional target date
+  linkedAccountId: ObjectId, // optional, track specific account
+  linkedCategoryId: ObjectId, // optional, track category spending
+  priority: String, // "high", "medium", "low"
+  status: String, // "active", "completed", "paused"
+  milestones: [{
+    amount: Number,
+    date: Date,
+    note: String
+  }],
+  metadata: {
+    icon: String,
+    color: String,
+    notes: String
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### 8. **ai_insights**
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  type: String, // "weekly" | "monthly" | "realtime"
+  insights: [{
+    category: String, // "alert" | "advice" | "achievement" | "goal_progress"
+    title: String, // "Spending increased by 12%"
+    description: String, // "last week"
+    priority: String, // "high" | "medium" | "low"
+    metadata: {
+      percentage: Number,
+      amount: Number,
+      comparisonPeriod: String,
+      categoryId: ObjectId,
+      goalId: ObjectId
+    },
+    isRead: Boolean,
+    createdAt: Date
+  }],
+  generatedAt: Date,
+  expiresAt: Date, // Auto-delete after 30 days
+  isStale: Boolean, // True if >7 days old
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### 9. **chat_sessions**
 ```javascript
 {
   _id: ObjectId,
@@ -166,10 +251,35 @@ A Next.js full-stack application using MongoDB for an AI-powered expense trackin
 - `DELETE /api/budgets/:id` - Delete budget
 - `GET /api/budgets/:id/status` - Get budget usage status
 
+### Recurring Transactions
+- `GET /api/recurring-transactions` - List all recurring transactions
+- `POST /api/recurring-transactions` - Create recurring transaction
+- `PUT /api/recurring-transactions/:id` - Update recurring transaction
+- `DELETE /api/recurring-transactions/:id` - Delete recurring transaction
+- `POST /api/recurring-transactions/:id/pause` - Pause recurring transaction
+- `POST /api/recurring-transactions/:id/resume` - Resume recurring transaction
+- `POST /api/recurring-transactions/process` - Manual trigger to process due recurrences (cron job)
+
+### Goals
+- `GET /api/goals` - List all goals
+- `POST /api/goals` - Create goal
+- `PUT /api/goals/:id` - Update goal
+- `DELETE /api/goals/:id` - Delete goal
+- `GET /api/goals/:id/progress` - Get goal progress and projections
+- `POST /api/goals/:id/contribute` - Manually add contribution to goal
+- `POST /api/goals/:id/complete` - Mark goal as completed
+
 ### AI Features
 - `POST /api/ai/chat` - Main AI chat endpoint with tool calling (text streaming)
 - `POST /api/ai/chat-ui` - AI chat with Generative UI (returns React components)
 - `POST /api/ai/extract-receipt` - Extract structured data from receipt images
+
+### AI Insights
+- `GET /api/insights` - Get current cached insights for user
+- `POST /api/insights/generate` - Manually trigger insight generation (rate-limited)
+- `PUT /api/insights/:id/read` - Mark specific insight as read
+- `DELETE /api/insights/:id` - Dismiss/delete specific insight
+- `POST /api/insights/process` - Background cron job to generate insights for all users
 
 ### Analytics
 - `GET /api/analytics/summary` - Get expense/income summary
@@ -225,7 +335,29 @@ A Next.js full-stack application using MongoDB for an AI-powered expense trackin
 - Alert triggers
 - Usage tracking
 
-### 8. **exportService**
+### 8. **recurringTransactionService**
+- CRUD operations for recurring transactions
+- Process due recurrences (cron job logic)
+- Generate actual transactions from templates
+- Calculate next occurrence dates
+- Handle pause/resume functionality
+
+### 9. **goalService**
+- CRUD operations for goals
+- Track progress and contributions
+- Calculate projections and completion estimates
+- Link to accounts/categories for automatic tracking
+- Milestone management
+
+### 10. **insightService**
+- Generate periodic AI insights (weekly/monthly)
+- Analyze spending patterns and trends
+- Create alert and advice cards
+- Process insights for all users (cron job)
+- Cache management and expiration
+- Real-time critical alerts (budget exceeded, unusual transactions)
+
+### 11. **exportService**
 - CSV/JSON export
 - Data import validation
 
@@ -253,10 +385,31 @@ expenseai/
 │   │   ├── budgets/
 │   │   │   ├── route.ts
 │   │   │   └── [id]/route.ts
+│   │   ├── recurring-transactions/
+│   │   │   ├── route.ts
+│   │   │   ├── [id]/route.ts
+│   │   │   ├── process/route.ts
+│   │   │   └── [id]/
+│   │   │       ├── pause/route.ts
+│   │   │       └── resume/route.ts
+│   │   ├── goals/
+│   │   │   ├── route.ts
+│   │   │   └── [id]/
+│   │   │       ├── route.ts
+│   │   │       ├── progress/route.ts
+│   │   │       ├── contribute/route.ts
+│   │   │       └── complete/route.ts
 │   │   ├── ai/
 │   │   │   ├── chat/route.ts           # Main AI chat with tool calling
 │   │   │   ├── chat-ui/route.ts        # Generative UI endpoint
 │   │   │   └── extract-receipt/route.ts # Receipt image analysis
+│   │   ├── insights/
+│   │   │   ├── route.ts                # Get cached insights
+│   │   │   ├── generate/route.ts       # Manual trigger
+│   │   │   ├── process/route.ts        # Cron job endpoint
+│   │   │   └── [id]/
+│   │   │       ├── read/route.ts       # Mark as read
+│   │   │       └── route.ts            # Delete insight
 │   │   ├── analytics/
 │   │   │   ├── summary/route.ts
 │   │   │   ├── trends/route.ts
@@ -274,6 +427,9 @@ expenseai/
 │   │       ├── Transaction.ts
 │   │       ├── Category.ts
 │   │       ├── Budget.ts
+│   │       ├── RecurringTransaction.ts
+│   │       ├── Goal.ts
+│   │       ├── AIInsight.ts
 │   │       └── ChatSession.ts
 │   ├── services/
 │   │   ├── authService.ts
@@ -283,6 +439,9 @@ expenseai/
 │   │   ├── accountService.ts
 │   │   ├── categoryService.ts
 │   │   ├── budgetService.ts
+│   │   ├── recurringTransactionService.ts
+│   │   ├── goalService.ts
+│   │   ├── insightService.ts
 │   │   └── exportService.ts
 │   ├── utils/
 │   │   ├── validation.ts
@@ -340,7 +499,37 @@ expenseai/
 4. Speech-to-text integration
 5. Natural language date parsing
 
-### Phase 4: Analytics & Polish
+### Phase 4: Recurring Transactions & Goals 🔄 (Next Priority)
+1. Create RecurringTransaction model
+2. Build recurringTransactionService with:
+   - CRUD operations
+   - Next occurrence calculation logic
+   - Transaction generation from templates
+3. Build `/api/recurring-transactions` endpoints
+4. Create Goal model
+5. Build goalService with:
+   - Progress tracking
+   - Projection calculations
+   - Auto-tracking from linked accounts/categories
+6. Build `/api/goals` endpoints
+7. Add cron job/scheduler for processing recurring transactions
+
+### Phase 5: AI Insights 💡
+1. Create AIInsight model
+2. Build insightService with:
+   - Weekly/monthly insight generation logic
+   - Spending pattern analysis
+   - Alert and advice card creation
+   - Cache management
+3. Build `/api/insights` endpoints
+4. Implement cron jobs:
+   - Weekly insights (Sunday 8 PM)
+   - Monthly insights (1st of month)
+   - Daily budget alerts
+5. Add manual refresh with rate limiting
+6. Create insight card UI components
+
+### Phase 6: Analytics & Polish
 1. Analytics dashboard with visualizations
 2. Budget alerts and notifications
 3. Import/Export (CSV/JSON)
@@ -365,6 +554,10 @@ expenseai/
 7. **Chat Sessions with Tool Metadata**: Track tool calls for debugging and undo functionality
 8. **Extensible Schema**: Metadata fields for future features
 9. **Dual API Pattern**: Traditional REST APIs + AI tool APIs work side-by-side
+10. **Separate Recurring Model**: Templates don't affect balances, clean separation of concerns
+11. **Goal Tracking Flexibility**: Link to accounts/categories for automatic progress or manual contributions
+12. **Cached AI Insights**: Periodic generation (not per-request) for performance and cost efficiency
+13. **Hybrid Insight System**: Cached periodic insights + real-time critical alerts
 
 ---
 
