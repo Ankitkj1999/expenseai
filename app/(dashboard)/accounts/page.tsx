@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Plus, Wallet, CreditCard, Building2, Trash2, Edit } from 'lucide-react';
+import { AlertCircle, Wallet, CreditCard, Building2, Trash2, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { FloatingActionButton } from '@/components/ui/floating-action-button';
 
 const accountIcons = {
   cash: Wallet,
@@ -47,19 +48,13 @@ export default function AccountsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Accounts</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your cash, bank accounts, credit cards, and wallets
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Account
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Accounts</h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-1">
+          Manage your cash, bank accounts, credit cards, and wallets
+        </p>
       </div>
 
       {/* Loading State */}
@@ -78,13 +73,9 @@ export default function AccountsPage() {
             <Wallet className="h-12 w-12 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium mb-2">No accounts yet</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            Create your first account to start tracking your finances across different sources.
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Create your first account to start tracking your finances across different sources. Use the + button below to get started.
           </p>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Your First Account
-          </Button>
         </div>
       )}
 
@@ -175,6 +166,9 @@ export default function AccountsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Floating Action Button */}
+      <FloatingActionButton ariaLabel="Add new account" />
     </div>
   );
 }
