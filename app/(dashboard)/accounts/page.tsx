@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useAccounts, useDeleteAccount } from '@/lib/hooks/useAccounts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Wallet, CreditCard, Building2, Trash2, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
+import { AccountSheet } from '@/components/forms/AccountSheet';
+import type { Account } from '@/lib/api/accounts';
 
 const accountIcons = {
   cash: Wallet,
@@ -19,6 +22,7 @@ const accountIcons = {
 export default function AccountsPage() {
   const { data: accounts = [], isLoading, error } = useAccounts();
   const deleteAccountMutation = useDeleteAccount();
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
@@ -123,7 +127,12 @@ export default function AccountsPage() {
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setEditingAccount(account)}
+                      >
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </Button>
@@ -167,8 +176,22 @@ export default function AccountsPage() {
         </Card>
       )}
 
-      {/* Floating Action Button */}
-      <FloatingActionButton ariaLabel="Add new account" />
+      {/* Floating Action Button with Sheet */}
+      <AccountSheet
+        mode="create"
+        trigger={<FloatingActionButton ariaLabel="Add new account" />}
+      />
+
+      {/* Edit Account Sheet */}
+      <AccountSheet
+        mode="edit"
+        initialData={editingAccount || undefined}
+        trigger={<div />}
+        open={!!editingAccount}
+        onOpenChange={(open) => {
+          if (!open) setEditingAccount(null);
+        }}
+      />
     </div>
   );
 }
