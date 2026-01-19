@@ -38,8 +38,8 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   // Get transactions
   const transactions = await Transaction.find(filter)
     .sort({ date: -1, createdAt: -1 })
-    .limit(limit)
-    .skip(skip)
+    .limit(limit || 50)
+    .skip(skip || 0)
     .populate('accountId', 'name type icon color')
     .populate('toAccountId', 'name type icon color')
     .populate('categoryId', 'name icon color');
@@ -47,7 +47,7 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   // Get total count
   const total = await Transaction.countDocuments(filter);
   
-  return ApiResponse.paginated(transactions, total, limit, skip);
+  return ApiResponse.paginated(transactions, total, limit || 50, skip || 0);
 });
 
 // POST /api/transactions - Create a new transaction

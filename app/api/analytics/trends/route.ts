@@ -14,9 +14,12 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   
   const { period, groupBy } = validation.data;
   
+  // Default to 'month' if period is not provided
+  const trendPeriod = period || 'month';
+  
   const trends = await analyticsService.getTrends(request.userId, {
-    period,
-    groupBy,
+    period: trendPeriod as 'week' | 'month' | 'year',
+    groupBy: groupBy as 'day' | 'week' | 'month' | undefined,
   });
   
   return ApiResponse.success({ data: trends, count: trends.length });

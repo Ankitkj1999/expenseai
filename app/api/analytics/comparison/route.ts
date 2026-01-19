@@ -14,9 +14,12 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   
   const { currentPeriod, previousPeriod } = validation.data;
   
+  // Default to 'month' if currentPeriod is not provided
+  const current = currentPeriod || 'month';
+  
   const comparison = await analyticsService.getComparison(request.userId, {
-    currentPeriod,
-    previousPeriod,
+    currentPeriod: current as 'today' | 'week' | 'month' | 'year',
+    previousPeriod: previousPeriod as 'today' | 'week' | 'month' | 'year' | undefined,
   });
   
   return ApiResponse.success(comparison);

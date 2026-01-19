@@ -14,8 +14,11 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   
   const { type, period, startDate, endDate } = validation.data;
   
+  // Default to 'expense' if type is not provided
+  const transactionType = type || 'expense';
+  
   const breakdown = await analyticsService.getCategoryBreakdown(request.userId, {
-    type,
+    type: transactionType as 'expense' | 'income',
     period,
     startDate: startDate ? new Date(startDate) : undefined,
     endDate: endDate ? new Date(endDate) : undefined,
