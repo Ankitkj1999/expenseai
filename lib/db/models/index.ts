@@ -11,6 +11,7 @@ import Category from './Category';
 import Transaction from './Transaction';
 import Budget from './Budget';
 import RecurringTransaction from './RecurringTransaction';
+import Goal from './Goal';
 import ChatSession from './ChatSession';
 
 // Export all models for convenient importing
@@ -21,6 +22,7 @@ export {
   Transaction,
   Budget,
   RecurringTransaction,
+  Goal,
   ChatSession,
 };
 
@@ -32,5 +34,6 @@ export default {
   Transaction,
   Budget,
   RecurringTransaction,
+  Goal,
   ChatSession,
 };
