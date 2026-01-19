@@ -14,18 +14,19 @@ export const transactionsApi = {
    * Get all transactions
    */
   list: async (): Promise<TransactionResponse[]> => {
-    const response = await api.get('transactions').json<TransactionsListResponse>();
-    return response.transactions;
+    const response = await api.get<TransactionsListResponse>('transactions');
+    return response.data.transactions;
   },
 
   /**
    * Create a new transaction
    */
   create: async (data: CreateTransactionRequest): Promise<TransactionResponse> => {
-    const response = await api
-      .post('transactions', { json: data })
-      .json<{ success: boolean; data: TransactionResponse }>();
-    return response.data;
+    const response = await api.post<{ success: boolean; data: TransactionResponse }>(
+      'transactions',
+      data
+    );
+    return response.data.data;
   },
 
   /**
@@ -35,10 +36,11 @@ export const transactionsApi = {
     id: string,
     data: UpdateTransactionRequest
   ): Promise<TransactionResponse> => {
-    const response = await api
-      .put(`transactions/${id}`, { json: data })
-      .json<{ success: boolean; data: TransactionResponse }>();
-    return response.data;
+    const response = await api.put<{ success: boolean; data: TransactionResponse }>(
+      `transactions/${id}`,
+      data
+    );
+    return response.data.data;
   },
 
   /**

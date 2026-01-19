@@ -29,7 +29,7 @@ A modern, responsive expense tracking app built with Next.js 16, shadcn/ui (dash
 - **Charts**: shadcn chart components (built on Recharts)
 
 **Data & Forms:**
-- **HTTP Client**: ky (modern fetch wrapper)
+- **HTTP Client**: axios (popular, battle-tested)
 - **Forms**: React Hook Form + Zod validation
 - **Date Handling**: date-fns
 - **State Management**: React Context (TanStack Query in Phase 2)

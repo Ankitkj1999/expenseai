@@ -32,8 +32,8 @@ export const authApi = {
    */
   me: async (): Promise<User | null> => {
     try {
-      const response = await api.get('auth/me').json<AuthResponse>();
-      return response.data;
+      const response = await api.get<AuthResponse>('auth/me');
+      return response.data.data;
     } catch {
       return null;
     }
@@ -44,10 +44,8 @@ export const authApi = {
    * Sets HTTP-only cookie on success
    */
   login: async (credentials: LoginCredentials): Promise<User> => {
-    const response = await api
-      .post('auth/login', { json: credentials })
-      .json<AuthResponse>();
-    return response.data;
+    const response = await api.post<AuthResponse>('auth/login', credentials);
+    return response.data.data;
   },
 
   /**
@@ -55,10 +53,8 @@ export const authApi = {
    * Sets HTTP-only cookie on success
    */
   register: async (data: RegisterData): Promise<User> => {
-    const response = await api
-      .post('auth/register', { json: data })
-      .json<AuthResponse>();
-    return response.data;
+    const response = await api.post<AuthResponse>('auth/register', data);
+    return response.data.data;
   },
 
   /**
