@@ -3,7 +3,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { toast } from 'sonner';
 import {
   Form,
   FormControl,
@@ -20,7 +19,7 @@ import { CategorySelect } from './shared/CategorySelect';
 import { AccountSelect } from './shared/AccountSelect';
 import { DatePicker } from './shared/DatePicker';
 import { FormActions } from './shared/FormActions';
-import { transactionsApi } from '@/lib/api/transactions';
+import { useCreateTransaction, useUpdateTransaction } from '@/lib/hooks/useTransactions';
 import type { TransactionResponse, TransactionType } from '@/types';
 
 // Validation schema
@@ -104,33 +103,34 @@ export function TransactionForm({
   const transactionType = form.watch('type');
   const accountId = form.watch('accountId');
 
+  const createMutation = useCreateTransaction();
+  const updateMutation = useUpdateTransaction();
+
   const onSubmit = async (data: TransactionFormData) => {
-    try {
-      const payload = {
-        type: data.type,
-        amount: data.amount,
-        description: data.description,
-        accountId: data.accountId,
-        toAccountId: data.toAccountId,
-        categoryId: data.categoryId,
-        date: data.date.toISOString(),
-        metadata: {
-          notes: data.notes || undefined,
-        },
-      };
+    const payload = {
+      type: data.type,
+      amount: data.amount,
+      description: data.description,
+      accountId: data.accountId,
+      toAccountId: data.toAccountId,
+      categoryId: data.categoryId,
+      date: data.date.toISOString(),
+      metadata: {
+        notes: data.notes || undefined,
+      },
+    };
 
-      const result =
-        mode === 'create'
-          ? await transactionsApi.create(payload)
-          : await transactionsApi.update(initialData!._id, payload);
-
-      toast.success(
-        `Transaction ${mode === 'create' ? 'created' : 'updated'} successfully`
+    if (mode === 'create') {
+      createMutation.mutate(payload, {
+        onSuccess: (result) => onSuccess(result),
+      });
+    } else {
+      updateMutation.mutate(
+        { id: initialData!._id, data: payload },
+        {
+          onSuccess: (result) => onSuccess(result),
+        }
       );
-      onSuccess(result);
-    } catch (error) {
-      console.error('Failed to save transaction:', error);
-      toast.error(`Failed to ${mode === 'create' ? 'create' : 'update'} transaction`);
     }
   };
 
@@ -302,7 +302,7 @@ export function TransactionForm({
 
         {/* Form Actions */}
         <FormActions
-          isSubmitting={form.formState.isSubmitting}
+          isSubmitting={form.formState.isSubmitting || createMutation.isPending || updateMutation.isPending}
           onCancel={onCancel}
           submitLabel={mode === 'create' ? 'Create Transaction' : 'Update Transaction'}
         />

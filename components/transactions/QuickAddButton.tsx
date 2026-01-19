@@ -4,15 +4,10 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TransactionDialog } from '@/components/forms/TransactionDialog';
 
-interface QuickAddButtonProps {
-  onSuccess?: () => void;
-}
-
-export function QuickAddButton({ onSuccess }: QuickAddButtonProps) {
+export function QuickAddButton() {
   return (
     <TransactionDialog
       mode="create"
-      onSuccess={onSuccess}
       trigger={
         <Button
           size="lg"

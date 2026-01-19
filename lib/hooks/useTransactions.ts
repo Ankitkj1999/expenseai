@@ -1,52 +1,75 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi } from '@/lib/api/transactions';
-import type { TransactionResponse } from '@/types';
+import { queryKeys } from '@/lib/constants/queryKeys';
+import type { TransactionResponse, CreateTransactionRequest, UpdateTransactionRequest } from '@/types';
 import { toast } from 'sonner';
 
+/**
+ * Hook to fetch all transactions
+ */
 export function useTransactions() {
-  const [transactions, setTransactions] = useState<TransactionResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  return useQuery({
+    queryKey: queryKeys.transactions(),
+    queryFn: transactionsApi.list,
+  });
+}
 
-  const fetchTransactions = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await transactionsApi.list();
-      setTransactions(data);
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      toast.error('Failed to load transactions');
-      console.error('Failed to fetch transactions:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+/**
+ * Hook to create a new transaction
+ */
+export function useCreateTransaction() {
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+  return useMutation({
+    mutationFn: (data: CreateTransactionRequest) => transactionsApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
+      toast.success('Transaction created successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Failed to create transaction:', error);
+      toast.error('Failed to create transaction');
+    },
+  });
+}
 
-  const deleteTransaction = async (id: string) => {
-    try {
-      await transactionsApi.delete(id);
-      setTransactions((prev) => prev.filter((t) => t._id !== id));
+/**
+ * Hook to update a transaction
+ */
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateTransactionRequest }) =>
+      transactionsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
+      toast.success('Transaction updated successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Failed to update transaction:', error);
+      toast.error('Failed to update transaction');
+    },
+  });
+}
+
+/**
+ * Hook to delete a transaction
+ */
+export function useDeleteTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => transactionsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       toast.success('Transaction deleted successfully');
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       console.error('Failed to delete transaction:', error);
       toast.error('Failed to delete transaction');
-      throw error;
-    }
-  };
-
-  return {
-    transactions,
-    isLoading,
-    error,
-    refetch: fetchTransactions,
-    deleteTransaction,
-  };
+    },
+  });
 }

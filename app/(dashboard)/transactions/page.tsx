@@ -5,7 +5,7 @@ import { AuthGuard } from '@/components/auth';
 import { TransactionCard } from '@/components/transactions/TransactionCard';
 import { TransactionDialog } from '@/components/forms/TransactionDialog';
 import { QuickAddButton } from '@/components/transactions/QuickAddButton';
-import { useTransactions } from '@/lib/hooks/useTransactions';
+import { useTransactions, useDeleteTransaction } from '@/lib/hooks/useTransactions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Filter } from 'lucide-react';
@@ -13,12 +13,13 @@ import { Button } from '@/components/ui/button';
 import type { TransactionResponse } from '@/types';
 
 function TransactionsPageContent() {
-  const { transactions, isLoading, error, refetch, deleteTransaction } = useTransactions();
+  const { data: transactions = [], isLoading, error } = useTransactions();
+  const deleteTransactionMutation = useDeleteTransaction();
   const [editingTransaction, setEditingTransaction] = useState<TransactionResponse | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this transaction?')) {
-      await deleteTransaction(id);
+      deleteTransactionMutation.mutate(id);
     }
   };
 
@@ -28,7 +29,6 @@ function TransactionsPageContent() {
 
   const handleEditSuccess = () => {
     setEditingTransaction(null);
-    refetch();
   };
 
   if (error) {
@@ -98,7 +98,7 @@ function TransactionsPageContent() {
       )}
 
       {/* Quick Add Button (FAB) */}
-      <QuickAddButton onSuccess={refetch} />
+      <QuickAddButton />
 
       {/* Edit Dialog */}
       {editingTransaction && (
