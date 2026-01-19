@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { GuestGuard } from '@/components/auth/GuestGuard';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
@@ -71,191 +72,193 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-background p-4 overflow-hidden">
-      {/* Animated Background */}
-      <AnimatedBackground />
+    <GuestGuard>
+      <div className="relative min-h-screen flex items-center justify-center bg-background p-4 overflow-hidden">
+        {/* Animated Background */}
+        <AnimatedBackground />
 
-      {/* Signup Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md"
-      >
-        <Card className="p-8 bg-card/50 backdrop-blur-sm border-primary/20">
-          {/* Logo */}
-          <div className="flex items-center justify-center mb-8">
-            <Brain className="h-10 w-10 text-primary mr-2" />
-            <span className="text-3xl font-bold">ExpenseAI</span>
-          </div>
-
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Create Account</h1>
-            <p className="text-muted-foreground">
-              Start tracking your expenses with AI
-            </p>
-          </div>
-
-          {/* Signup Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Name Field */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center">
-                <User className="h-4 w-4 mr-2 text-primary" />
-                Full Name
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                {...register('name')}
-                className={errors.name ? 'border-destructive' : ''}
-                disabled={isLoading}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+        {/* Signup Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <Card className="p-8 bg-card/50 backdrop-blur-sm border-primary/20">
+            {/* Logo */}
+            <div className="flex items-center justify-center mb-8">
+              <Brain className="h-10 w-10 text-primary mr-2" />
+              <span className="text-3xl font-bold">ExpenseAI</span>
             </div>
 
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center">
-                <Mail className="h-4 w-4 mr-2 text-primary" />
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register('email')}
-                className={errors.email ? 'border-destructive' : ''}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+            {/* Title */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold mb-2">Create Account</h1>
+              <p className="text-muted-foreground">
+                Start tracking your expenses with AI
+              </p>
             </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center">
-                <Lock className="h-4 w-4 mr-2 text-primary" />
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                onChange={(e) => setPasswordValue(e.target.value)}
-                className={errors.password ? 'border-destructive' : ''}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-              
-              {/* Password Strength Indicator */}
-              {password && (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Password strength:</span>
-                    <span className={`font-medium ${passwordStrength.color.replace('bg-', 'text-')}`}>
-                      {passwordStrength.label}
-                    </span>
+            {/* Signup Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Name Field */}
+              <div className="space-y-2">
+                <Label htmlFor="name" className="flex items-center">
+                  <User className="h-4 w-4 mr-2 text-primary" />
+                  Full Name
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  {...register('name')}
+                  className={errors.name ? 'border-destructive' : ''}
+                  disabled={isLoading}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+
+              {/* Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-primary" />
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  {...register('email')}
+                  className={errors.email ? 'border-destructive' : ''}
+                  disabled={isLoading}
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="flex items-center">
+                  <Lock className="h-4 w-4 mr-2 text-primary" />
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  {...register('password')}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  className={errors.password ? 'border-destructive' : ''}
+                  disabled={isLoading}
+                />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                )}
+                
+                {/* Password Strength Indicator */}
+                {password && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Password strength:</span>
+                      <span className={`font-medium ${passwordStrength.color.replace('bg-', 'text-')}`}>
+                        {passwordStrength.label}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                        style={{ width: `${passwordStrength.strength}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${passwordStrength.color} transition-all duration-300`}
-                      style={{ width: `${passwordStrength.strength}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="flex items-center">
-                <Check className="h-4 w-4 mr-2 text-primary" />
-                Confirm Password
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'border-destructive' : ''}
+              {/* Confirm Password Field */}
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="flex items-center">
+                  <Check className="h-4 w-4 mr-2 text-primary" />
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  {...register('confirmPassword')}
+                  className={errors.confirmPassword ? 'border-destructive' : ''}
+                  disabled={isLoading}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              {/* Terms & Conditions */}
+              <p className="text-xs text-muted-foreground">
+                By creating an account, you agree to our{' '}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+              </p>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={isLoading}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-              )}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-card text-muted-foreground">
+                  Already have an account?
+                </span>
+              </div>
             </div>
 
-            {/* Terms & Conditions */}
-            <p className="text-xs text-muted-foreground">
-              By creating an account, you agree to our{' '}
-              <Link href="/terms" className="text-primary hover:underline">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="/privacy" className="text-primary hover:underline">
-                Privacy Policy
-              </Link>
-            </p>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                <>
-                  Create Account
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-card text-muted-foreground">
-                Already have an account?
-              </span>
-            </div>
-          </div>
-
-          {/* Sign In Link */}
-          <Link href="/login">
-            <Button
-              variant="outline"
-              className="w-full border-primary/20 hover:bg-primary/10 hover:text-primary"
-            >
-              Sign In
-            </Button>
-          </Link>
-
-          {/* Back to Home */}
-          <div className="text-center mt-6">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
-              ← Back to Home
+            {/* Sign In Link */}
+            <Link href="/login">
+              <Button
+                variant="outline"
+                className="w-full border-primary/20 hover:bg-primary/10 hover:text-primary"
+              >
+                Sign In
+              </Button>
             </Link>
-          </div>
-        </Card>
-      </motion.div>
-    </div>
+
+            {/* Back to Home */}
+            <div className="text-center mt-6">
+              <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+                ← Back to Home
+              </Link>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    </GuestGuard>
   );
 }
