@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IInsight {
-  category: 'alert' | 'advice' | 'achievement' | 'goal_progress';
+  category: 'alert' | 'advice' | 'achievement';
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
@@ -10,7 +10,6 @@ export interface IInsight {
     amount?: number;
     comparisonPeriod?: string;
     categoryId?: mongoose.Types.ObjectId;
-    goalId?: mongoose.Types.ObjectId;
   };
   isRead: boolean;
   createdAt: Date;
@@ -32,7 +31,7 @@ const InsightSchema = new Schema<IInsight>(
     category: {
       type: String,
       required: true,
-      enum: ['alert', 'advice', 'achievement', 'goal_progress'],
+      enum: ['alert', 'advice', 'achievement'],
     },
     title: {
       type: String,
@@ -57,10 +56,6 @@ const InsightSchema = new Schema<IInsight>(
       categoryId: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
-      },
-      goalId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Goal',
       },
     },
     isRead: {

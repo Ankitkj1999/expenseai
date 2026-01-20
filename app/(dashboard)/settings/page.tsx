@@ -45,7 +45,6 @@ export default function SettingsPage() {
   
   const [notifications, setNotifications] = useState({
     budgetAlerts: true,
-    goalReminders: true,
     weeklyReports: false,
     transactionUpdates: true,
     insightNotifications: true,
@@ -347,22 +346,6 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <Label htmlFor="goal-reminders">Goal Reminders</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive reminders about your financial goals
-                    </p>
-                  </div>
-                  <Switch
-                    id="goal-reminders"
-                    checked={notifications.goalReminders}
-                    onCheckedChange={(checked) =>
-                      setNotifications({ ...notifications, goalReminders: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
                     <Label htmlFor="weekly-reports">Weekly Reports</Label>
                     <p className="text-sm text-muted-foreground">
                       Get weekly spending summaries via email
@@ -434,7 +417,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Export all your transactions, accounts, budgets, and goals to a JSON or CSV file.
+                  Export all your transactions, accounts, and budgets to a JSON or CSV file.
                   This can be useful for backup or analysis purposes.
                 </p>
 
@@ -506,7 +489,7 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Delete All Data</h4>
                   <p className="text-sm text-muted-foreground">
-                    Permanently delete all your transactions, accounts, budgets, and goals.
+                    Permanently delete all your transactions, accounts, and budgets.
                     This action cannot be undone.
                   </p>
                   <Button

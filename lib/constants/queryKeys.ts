@@ -20,11 +20,6 @@ export const queryKeys = {
   budget: (id: string) => ['budget', id] as const,
   budgetStatus: (id: string) => ['budget', id, 'status'] as const,
 
-  // Goals
-  goals: ['goals'] as const,
-  goal: (id: string) => ['goal', id] as const,
-  goalProgress: (id: string) => ['goal', id, 'progress'] as const,
-
   // Recurring Transactions
   recurring: ['recurring'] as const,
   recurringItem: (id: string) => ['recurring', id] as const,

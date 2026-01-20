@@ -46,15 +46,15 @@ const features = [
     color: 'text-accent',
   },
   {
-    icon: PiggyBank,
-    title: 'Goal Tracking',
-    description: 'Set and achieve your financial goals with personalized milestones and progress tracking.',
-    color: 'text-chart-3',
-  },
-  {
     icon: Zap,
     title: 'Real-time Sync',
     description: 'Your data syncs instantly across all devices, always up-to-date.',
+    color: 'text-chart-3',
+  },
+  {
+    icon: PiggyBank,
+    title: 'Budget Management',
+    description: 'Set spending limits and track your budget progress with smart alerts and insights.',
     color: 'text-chart-4',
   },
   {
@@ -74,7 +74,7 @@ const features = [
 const stats = [
   { icon: Wallet, value: '10K+', label: 'Active Users' },
   { icon: BarChart3, value: '$5M+', label: 'Tracked Expenses' },
-  { icon: Target, value: '95%', label: 'Goal Success Rate' },
+  { icon: Target, value: '95%', label: 'Budget Accuracy' },
 ];
 
 export default function LandingPage() {
@@ -133,7 +133,7 @@ export default function LandingPage() {
             variants={fadeInUp}
             className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto"
           >
-            Track expenses, set budgets, and achieve your financial goals with the power of AI.
+            Track expenses, set budgets, and gain insights with the power of AI.
             Your personal finance assistant that learns and adapts to your spending habits.
           </motion.p>
 

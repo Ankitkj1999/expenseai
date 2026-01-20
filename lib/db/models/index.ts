@@ -11,7 +11,6 @@ import Category from './Category';
 import Transaction from './Transaction';
 import Budget from './Budget';
 import RecurringTransaction from './RecurringTransaction';
-import Goal from './Goal';
 import AIInsight from './AIInsight';
 import ChatSession from './ChatSession';
 
@@ -23,7 +22,6 @@ export {
   Transaction,
   Budget,
   RecurringTransaction,
-  Goal,
   AIInsight,
   ChatSession,
 };
@@ -36,7 +34,6 @@ export default {
   Transaction,
   Budget,
   RecurringTransaction,
-  Goal,
   AIInsight,
   ChatSession,
 };

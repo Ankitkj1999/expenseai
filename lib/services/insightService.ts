@@ -1,7 +1,6 @@
 import AIInsight, { IAIInsight, IInsight } from '@/lib/db/models/AIInsight';
 import Transaction from '@/lib/db/models/Transaction';
 import Budget from '@/lib/db/models/Budget';
-import Goal from '@/lib/db/models/Goal';
 import connectDB from '@/lib/db/mongodb';
 
 /**
@@ -127,29 +126,6 @@ export async function generateWeeklyInsights(userId: string): Promise<IAIInsight
           percentage: Math.round(percentage),
           amount: spentAmount,
           categoryId: budget.categoryId,
-        },
-        isRead: false,
-        createdAt: now,
-      });
-    }
-  }
-
-  // Goal progress
-  const goals = await Goal.find({ userId, status: 'active' });
-  for (const goal of goals) {
-    const progress = (goal.currentAmount / goal.targetAmount) * 100;
-
-    if (progress >= 50 && progress < 100) {
-      const remainingAmount = goal.targetAmount - goal.currentAmount;
-      insights.push({
-        category: 'goal_progress',
-        title: `${goal.name} is ${Math.round(progress)}% complete`,
-        description: `${remainingAmount} remaining`,
-        priority: 'low',
-        metadata: {
-          percentage: Math.round(progress),
-          amount: goal.currentAmount,
-          goalId: goal._id,
         },
         isRead: false,
         createdAt: now,
