@@ -5,18 +5,21 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
-  Brain,
+  Sparkles,
   TrendingUp,
   PiggyBank,
   Zap,
   Shield,
-  Sparkles,
+  Layers,
   ArrowRight,
   BarChart3,
   Wallet,
   Target,
+  Menu,
+  X,
 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
+import { useState } from 'react';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -34,7 +37,7 @@ const staggerContainer = {
 
 const features = [
   {
-    icon: Brain,
+    icon: Sparkles,
     title: 'AI-Powered Insights',
     description: 'Get intelligent recommendations and spending analysis powered by advanced AI.',
     color: 'text-primary',
@@ -43,19 +46,19 @@ const features = [
     icon: TrendingUp,
     title: 'Smart Analytics',
     description: 'Visualize your financial trends with beautiful, interactive charts and graphs.',
-    color: 'text-accent',
+    color: 'text-primary',
   },
   {
     icon: Zap,
     title: 'Real-time Sync',
     description: 'Your data syncs instantly across all devices, always up-to-date.',
-    color: 'text-chart-3',
+    color: 'text-primary',
   },
   {
     icon: PiggyBank,
     title: 'Budget Management',
     description: 'Set spending limits and track your budget progress with smart alerts and insights.',
-    color: 'text-chart-4',
+    color: 'text-primary',
   },
   {
     icon: Shield,
@@ -64,10 +67,10 @@ const features = [
     color: 'text-primary',
   },
   {
-    icon: Sparkles,
+    icon: Layers,
     title: 'Automated Categorization',
     description: 'AI automatically categorizes your transactions, saving you time and effort.',
-    color: 'text-accent',
+    color: 'text-primary',
   },
 ];
 
@@ -78,31 +81,150 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
       {/* Animated Background */}
       <AnimatedBackground />
 
-      {/* Navigation */}
+      {/* Navigation - Pill Shape */}
       <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 border-b border-border/40 backdrop-blur-sm"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="relative z-50 pt-6 px-4"
       >
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Brain className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">ExpenseAI</span>
+        <div className="container mx-auto max-w-5xl">
+          {/* Pill-shaped container */}
+          <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-full shadow-2xl shadow-primary/5">
+            <div className="flex items-center justify-between px-6 py-3 md:px-8 md:py-4">
+              {/* Logo */}
+              <Link href="/" className="flex items-center space-x-2 group">
+                <div className="relative">
+                  <Sparkles className="h-7 w-7 md:h-8 md:w-8 text-primary transition-transform group-hover:scale-110" />
+                  <div className="absolute inset-0 blur-xl bg-primary/30 group-hover:bg-primary/50 transition-all" />
+                </div>
+                <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                  ExpenseAI
+                </span>
+              </Link>
+
+              {/* Desktop Navigation Links */}
+              <div className="hidden md:flex items-center space-x-1">
+                <Link href="#features">
+                  <Button
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-full transition-all"
+                  >
+                    Features
+                  </Button>
+                </Link>
+                <Link href="#pricing">
+                  <Button
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-full transition-all"
+                  >
+                    Pricing
+                  </Button>
+                </Link>
+                <Link href="#about">
+                  <Button
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-full transition-all"
+                  >
+                    About
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Desktop Action Buttons */}
+              <div className="hidden md:flex items-center space-x-2">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    className="hover:bg-primary/10 hover:text-primary rounded-full transition-all"
+                  >
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 hover:bg-primary/10 rounded-full transition-colors"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-6 w-6 text-foreground" />
+                ) : (
+                  <Menu className="h-6 w-6 text-foreground" />
+                )}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="ghost" className="hover:bg-primary/10 hover:text-primary">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Get Started</Button>
-            </Link>
-          </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="md:hidden mt-4 bg-card/95 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl shadow-primary/5 overflow-hidden"
+            >
+              <div className="flex flex-col p-4 space-y-2">
+                <Link href="#features" onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-2xl"
+                  >
+                    Features
+                  </Button>
+                </Link>
+                <Link href="#pricing" onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-2xl"
+                  >
+                    Pricing
+                  </Button>
+                </Link>
+                <Link href="#about" onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-primary/10 rounded-2xl"
+                  >
+                    About
+                  </Button>
+                </Link>
+                <div className="pt-2 border-t border-border/50 space-y-2">
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      className="w-full hover:bg-primary/10 hover:text-primary rounded-2xl"
+                    >
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-lg shadow-primary/25"
+                    >
+                      Get Started
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </motion.nav>
 
@@ -244,7 +366,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Brain className="h-6 w-6 text-primary" />
+              <Sparkles className="h-6 w-6 text-primary" />
               <span className="text-lg font-semibold">ExpenseAI</span>
             </div>
             <p className="text-muted-foreground text-sm">
