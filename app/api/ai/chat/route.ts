@@ -257,6 +257,70 @@ Current date: ${new Date().toISOString().split('T')[0]}`,
 });
 
 /**
+ * DELETE /api/ai/chat
+ * Delete a chat session
+ */
+export const DELETE = withAuthAndDb(async (request: AuthenticatedRequest) => {
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get('sessionId');
+
+  if (!sessionId) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Session ID is required',
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  try {
+    const result = await ChatSession.deleteOne({
+      _id: sessionId,
+      userId: request.userId,
+    });
+
+    if (result.deletedCount === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Session not found',
+        }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Session deleted successfully',
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    console.error('[AI Chat] Error deleting session:', error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Failed to delete session',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+});
+
+/**
  * GET /api/ai/chat
  * Get chat session history
  */
