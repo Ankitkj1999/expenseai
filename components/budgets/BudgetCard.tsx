@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Edit, Trash2, Calendar, Target, TrendingUp } from 'lucide-react';
+import { useFormatting } from '@/lib/hooks/useFormatting';
 import type { Budget } from '@/lib/api/budgets';
 
 interface BudgetCardProps {
@@ -15,26 +16,13 @@ interface BudgetCardProps {
 }
 
 export function BudgetCard({ budget, onEdit, onDelete, isDeleting }: BudgetCardProps) {
+  const { formatCurrency, formatDate } = useFormatting();
+  
   // Calculate progress (mock for now - would come from API)
   const spent = 0; // TODO: Get from API
   const progress = (spent / budget.amount) * 100;
   const isOverBudget = progress > 100;
   const isNearLimit = progress >= budget.alertThreshold && !isOverBudget;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-IN', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
 
   const getPeriodLabel = (period: string) => {
     return period.charAt(0).toUpperCase() + period.slice(1);

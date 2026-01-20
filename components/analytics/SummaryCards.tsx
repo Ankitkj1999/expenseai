@@ -9,15 +9,16 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  ArrowUpIcon, 
-  ArrowDownIcon, 
-  TrendingUpIcon, 
-  WalletIcon, 
+import {
+  ArrowUpIcon,
+  ArrowDownIcon,
+  TrendingUpIcon,
+  WalletIcon,
   PiggyBankIcon,
-  AlertCircle 
+  AlertCircle
 } from "lucide-react";
 import { useAnalyticsSummary } from "@/lib/hooks/useAnalytics";
+import { useCurrency } from "@/lib/hooks/useFormatting";
 
 type Period = "today" | "week" | "month" | "year";
 
@@ -26,6 +27,7 @@ interface SummaryCardsProps {
 }
 
 export function SummaryCards({ period = "month" }: SummaryCardsProps) {
+  const { formatCurrency } = useCurrency();
   const { data: summary, isLoading, error } = useAnalyticsSummary({ period });
 
   if (error) {
@@ -72,7 +74,7 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
               <item.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0.00</div>
+              <div className="text-2xl font-bold">{formatCurrency(0)}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 No data available
               </p>
@@ -100,7 +102,7 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            ${summary.totalIncome.toFixed(2)}
+            {formatCurrency(summary.totalIncome)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             {summary.transactionCount} transaction{summary.transactionCount !== 1 ? "s" : ""}
@@ -118,7 +120,7 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            ${summary.totalExpense.toFixed(2)}
+            {formatCurrency(summary.totalExpense)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             {summary.totalIncome > 0
@@ -141,12 +143,12 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
             {savings >= 0 ? (
               <div className="flex items-center gap-1">
                 <ArrowUpIcon className="h-5 w-5" />
-                ${savings.toFixed(2)}
+                {formatCurrency(savings)}
               </div>
             ) : (
               <div className="flex items-center gap-1">
                 <ArrowDownIcon className="h-5 w-5" />
-                ${Math.abs(savings).toFixed(2)}
+                {formatCurrency(Math.abs(savings))}
               </div>
             )}
           </div>

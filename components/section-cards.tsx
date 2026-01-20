@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PiggyBank } from 'lucide-react';
+import { useCurrency } from '@/lib/hooks/useFormatting';
 
 interface SummaryCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ title, amount, change, icon: Icon, type }: SummaryCardProps) {
+  const { formatCurrency } = useCurrency();
   const isPositive = change && change.value > 0;
   const colorClass = {
     balance: 'text-primary',
@@ -36,7 +38,7 @@ function SummaryCard({ title, amount, change, icon: Icon, type }: SummaryCardPro
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
           <h3 className="text-3xl font-bold mt-2">
-            ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(amount)}
           </h3>
           {change && (
             <div className="flex items-center mt-2 text-sm">

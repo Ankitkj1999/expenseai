@@ -29,6 +29,7 @@ import {
   X,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFormatting } from '@/lib/hooks/useFormatting';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -77,6 +78,7 @@ export function TransactionTable({
   onEdit,
   onDelete,
 }: TransactionTableProps) {
+  const { formatCurrency, formatDate } = useFormatting();
   const [isMobile, setIsMobile] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -177,10 +179,9 @@ export function TransactionTable({
         );
       },
       cell: ({ row }) => {
-        const date = new Date(row.original.date);
         return (
           <div className="font-medium">
-            {format(date, 'MMM dd, yyyy')}
+            {formatDate(row.original.date)}
           </div>
         );
       },
@@ -264,7 +265,7 @@ export function TransactionTable({
         const amount = row.original.amount;
         const type = row.original.type;
         const account = row.original.accountId as AccountResponse | undefined;
-        const currency = typeof account === 'object' && account.currency ? account.currency : 'USD';
+        const currency = typeof account === 'object' && account.currency ? account.currency : undefined;
 
         let colorClass = '';
         let sign = '';
@@ -280,11 +281,8 @@ export function TransactionTable({
           sign = '→';
         }
 
-        // Format amount with proper currency
-        const formattedAmount = new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: currency || 'USD',
-        }).format(Math.abs(amount));
+        // Format amount with proper currency (use account currency if available, otherwise user preference)
+        const formattedAmount = formatCurrency(Math.abs(amount), currency);
 
         return (
           <div className={cn('font-semibold text-right', colorClass)}>
