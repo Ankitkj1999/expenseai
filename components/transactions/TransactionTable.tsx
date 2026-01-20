@@ -28,7 +28,7 @@ import {
   Filter,
   X,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useFormatting } from '@/lib/hooks/useFormatting';
 import { Button } from '@/components/ui/button';
 import {
@@ -63,6 +63,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { ColumnVisibilityDropdown } from './ColumnVisibilityDropdown';
+import { GroupBySelect, type GroupByOption } from './GroupBySelect';
+import { GroupedTransactionRow } from './GroupedTransactionRow';
 import type { TransactionResponse, CategoryResponse, AccountResponse } from '@/types';
 
 interface TransactionTableProps {
@@ -70,6 +73,12 @@ interface TransactionTableProps {
   isLoading?: boolean;
   onEdit: (transaction: TransactionResponse) => void;
   onDelete: (id: string) => void;
+}
+
+interface GroupedTransactions {
+  groupKey: string;
+  groupLabel: string;
+  transactions: TransactionResponse[];
 }
 
 export function TransactionTable({
@@ -88,6 +97,7 @@ export function TransactionTable({
     pageIndex: 0,
     pageSize: 20,
   });
+  const [groupBy, setGroupBy] = useState<GroupByOption>('none');
 
   // Filter states
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -162,6 +172,117 @@ export function TransactionTable({
       return true;
     });
   }, [transactions, typeFilter, categoryFilter, dateRange]);
+
+  // Group transactions based on groupBy option
+  const groupedTransactions = useMemo((): GroupedTransactions[] => {
+    if (groupBy === 'none') {
+      return [{
+        groupKey: 'all',
+        groupLabel: '',
+        transactions: filteredTransactions,
+      }];
+    }
+
+    const groups = new Map<string, TransactionResponse[]>();
+
+    filteredTransactions.forEach((transaction) => {
+      let groupKey = '';
+      let groupLabel = '';
+
+      if (groupBy === 'date') {
+        const date = new Date(transaction.date);
+        if (isToday(date)) {
+          groupKey = 'today';
+          groupLabel = 'Today';
+        } else if (isYesterday(date)) {
+          groupKey = 'yesterday';
+          groupLabel = 'Yesterday';
+        } else if (isThisWeek(date)) {
+          groupKey = 'thisWeek';
+          groupLabel = 'This Week';
+        } else if (isThisMonth(date)) {
+          groupKey = 'thisMonth';
+          groupLabel = 'This Month';
+        } else {
+          const monthYear = format(date, 'MMMM yyyy');
+          groupKey = monthYear;
+          groupLabel = monthYear;
+        }
+      } else if (groupBy === 'category') {
+        const category = transaction.categoryId as CategoryResponse | undefined;
+        if (category && typeof category === 'object') {
+          groupKey = category._id;
+          groupLabel = category.name;
+        } else {
+          groupKey = 'uncategorized';
+          groupLabel = 'Uncategorized';
+        }
+      } else if (groupBy === 'account') {
+        const account = transaction.accountId as AccountResponse | undefined;
+        if (account && typeof account === 'object') {
+          groupKey = account._id;
+          groupLabel = account.name;
+        } else {
+          groupKey = 'unknown';
+          groupLabel = 'Unknown Account';
+        }
+      }
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, []);
+      }
+      groups.get(groupKey)!.push(transaction);
+    });
+
+    // Convert to array and sort groups
+    const groupsArray = Array.from(groups.entries()).map(([key, txns]) => {
+      let label = key;
+      
+      // Find the label from the first transaction in the group
+      if (groupBy === 'date') {
+        if (key === 'today') label = 'Today';
+        else if (key === 'yesterday') label = 'Yesterday';
+        else if (key === 'thisWeek') label = 'This Week';
+        else if (key === 'thisMonth') label = 'This Month';
+        else label = key;
+      } else if (groupBy === 'category') {
+        const firstTxn = txns[0];
+        const category = firstTxn.categoryId as CategoryResponse | undefined;
+        label = category && typeof category === 'object' ? category.name : 'Uncategorized';
+      } else if (groupBy === 'account') {
+        const firstTxn = txns[0];
+        const account = firstTxn.accountId as AccountResponse | undefined;
+        label = account && typeof account === 'object' ? account.name : 'Unknown Account';
+      }
+
+      return {
+        groupKey: key,
+        groupLabel: label,
+        transactions: txns,
+      };
+    });
+
+    // Sort groups by date (most recent first) for date grouping
+    if (groupBy === 'date') {
+      const order = ['today', 'yesterday', 'thisWeek', 'thisMonth'];
+      groupsArray.sort((a, b) => {
+        const aIndex = order.indexOf(a.groupKey);
+        const bIndex = order.indexOf(b.groupKey);
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex;
+        }
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        // For month/year groups, sort by date
+        return b.groupKey.localeCompare(a.groupKey);
+      });
+    } else {
+      // Sort alphabetically for other groupings
+      groupsArray.sort((a, b) => a.groupLabel.localeCompare(b.groupLabel));
+    }
+
+    return groupsArray;
+  }, [filteredTransactions, groupBy]);
 
   const columns: ColumnDef<TransactionResponse>[] = [
     {
@@ -351,9 +472,10 @@ export function TransactionTable({
     setCategoryFilter('all');
     setDateRange({});
     setGlobalFilter('');
+    setGroupBy('none');
   };
 
-  const hasActiveFilters = typeFilter !== 'all' || categoryFilter !== 'all' || dateRange.from || dateRange.to || globalFilter;
+  const hasActiveFilters = typeFilter !== 'all' || categoryFilter !== 'all' || dateRange.from || dateRange.to || globalFilter || groupBy !== 'none';
 
   if (isLoading) {
     return (
@@ -377,230 +499,299 @@ export function TransactionTable({
   return (
     <div className="space-y-4">
       {/* Filters and Search */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search transactions..."
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {/* Type Filter */}
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="income">Income</SelectItem>
-              <SelectItem value="expense">Expense</SelectItem>
-              <SelectItem value="transfer">Transfer</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Category Filter */}
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((catId) => {
-                const transaction = transactions.find(
-                  (t) => typeof t.categoryId === 'object' && (t.categoryId as CategoryResponse)?._id === catId
-                );
-                const category = transaction?.categoryId as CategoryResponse | undefined;
-                if (!category || typeof category === 'string') return null;
-                return (
-                  <SelectItem key={catId} value={catId}>
-                    {category.name}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-
-          {/* Date Range Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange.from ? (
-                  dateRange.to ? (
-                    <>
-                      {format(dateRange.from, 'MMM dd')} - {format(dateRange.to, 'MMM dd')}
-                    </>
-                  ) : (
-                    format(dateRange.from, 'MMM dd, yyyy')
-                  )
-                ) : (
-                  <span>Date Range</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="range"
-                selected={{ from: dateRange.from, to: dateRange.to }}
-                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-
-          {/* Clear Filters */}
-          {hasActiveFilters && (
-            <Button variant="ghost" onClick={clearFilters} size="sm">
-              <X className="mr-2 h-4 w-4" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-          <TableHeader className="bg-muted/50">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-muted/50">
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="h-12 px-6">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  className="group"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-4 px-6">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Filter className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No transactions found</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm">
-                      {hasActiveFilters
-                        ? 'Try adjusting your filters to see more results.'
-                        : 'Start tracking your finances by adding your first transaction.'}
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {table.getRowModel().rows?.length > 0 && (
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              filteredTransactions.length
-            )}{' '}
-            of {filteredTransactions.length} transactions
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search transactions..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="pl-9"
+            />
           </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {/* Type Filter */}
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
+                <SelectItem value="expense">Expense</SelectItem>
+                <SelectItem value="transfer">Transfer</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Rows per page</span>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value));
-                }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue placeholder={table.getState().pagination.pageSize} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[20, 30, 40, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
+            {/* Category Filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((catId) => {
+                  const transaction = transactions.find(
+                    (t) => typeof t.categoryId === 'object' && (t.categoryId as CategoryResponse)?._id === catId
+                  );
+                  const category = transaction?.categoryId as CategoryResponse | undefined;
+                  if (!category || typeof category === 'string') return null;
+                  return (
+                    <SelectItem key={catId} value={catId}>
+                      {category.name}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  );
+                })}
+              </SelectContent>
+            </Select>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeft className="h-4 w-4" />
+            {/* Date Range Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, 'MMM dd')} - {format(dateRange.to, 'MMM dd')}
+                      </>
+                    ) : (
+                      format(dateRange.from, 'MMM dd, yyyy')
+                    )
+                  ) : (
+                    <span>Date Range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={{ from: dateRange.from, to: dateRange.to }}
+                  onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <Button variant="ghost" onClick={clearFilters} size="sm">
+                <X className="mr-2 h-4 w-4" />
+                Clear
               </Button>
-              <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center justify-center text-sm font-medium min-w-[100px]">
-                Page {table.getState().pagination.pageIndex + 1} of{' '}
-                {table.getPageCount()}
-              </div>
-              <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
+            )}
           </div>
         </div>
+
+        {/* Second row: Group By and Column Visibility */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <GroupBySelect value={groupBy} onValueChange={setGroupBy} />
+          <ColumnVisibilityDropdown table={table} />
+        </div>
+      </div>
+
+      {/* Table or Grouped Tables */}
+      {groupBy === 'none' ? (
+        <>
+          {/* Regular Table */}
+          <div className="rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id} className="hover:bg-muted/50">
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id} className="h-12 px-6">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                        className="group"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="py-4 px-6">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <Filter className="h-12 w-12 text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-medium mb-2">No transactions found</h3>
+                          <p className="text-sm text-muted-foreground max-w-sm">
+                            {hasActiveFilters
+                              ? 'Try adjusting your filters to see more results.'
+                              : 'Start tracking your finances by adding your first transaction.'}
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          {table.getRowModel().rows?.length > 0 && (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  filteredTransactions.length
+                )}{' '}
+                of {filteredTransactions.length} transactions
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Rows per page</span>
+                  <Select
+                    value={`${table.getState().pagination.pageSize}`}
+                    onValueChange={(value) => {
+                      table.setPageSize(Number(value));
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={table.getState().pagination.pageSize} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[20, 30, 40, 50].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 lg:flex"
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <span className="sr-only">Go to first page</span>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <span className="sr-only">Go to previous page</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center justify-center text-sm font-medium min-w-[100px]">
+                    Page {table.getState().pagination.pageIndex + 1} of{' '}
+                    {table.getPageCount()}
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <span className="sr-only">Go to next page</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 lg:flex"
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <span className="sr-only">Go to last page</span>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Grouped Tables */}
+          <div className="space-y-6">
+            {groupedTransactions.map((group) => (
+              <div key={group.groupKey} className="space-y-3">
+                {/* Group Header */}
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold">{group.groupLabel}</h3>
+                  <Badge variant="secondary" className="font-normal">
+                    {group.transactions.length} {group.transactions.length === 1 ? 'transaction' : 'transactions'}
+                  </Badge>
+                </div>
+
+                {/* Group Table */}
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow className="hover:bg-muted/50">
+                          {table.getHeaderGroups()[0].headers.map((header) => (
+                            <TableHead key={header.id} className="h-12 px-6">
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.transactions.map((transaction) => (
+                          <GroupedTransactionRow
+                            key={transaction._id}
+                            transaction={transaction}
+                            columns={columns}
+                            columnVisibility={columnVisibility}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Summary for grouped view */}
+          {filteredTransactions.length > 0 && (
+            <div className="text-sm text-muted-foreground text-center">
+              Showing {filteredTransactions.length} transactions in {groupedTransactions.length} {groupedTransactions.length === 1 ? 'group' : 'groups'}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
