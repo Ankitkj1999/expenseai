@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate } from '@/lib/middleware/auth';
 import User from '@/lib/db/models/User';
-import { hashPassword, verifyPassword } from '@/lib/utils/auth';
+import { hashPassword, comparePassword } from '@/lib/utils/auth';
 
 // Validation schema for password change
 const changePasswordSchema = z.object({
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify current password
-    const isPasswordValid = await verifyPassword(currentPassword, user.passwordHash);
+    const isPasswordValid = await comparePassword(currentPassword, user.passwordHash);
     
     if (!isPasswordValid) {
       return NextResponse.json(

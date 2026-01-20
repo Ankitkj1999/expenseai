@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate } from '@/lib/middleware/auth';
 import User from '@/lib/db/models/User';
+import { CURRENCY_CODES } from '@/lib/constants/currencies';
+import { DATE_FORMAT_VALUES } from '@/lib/constants/dateFormats';
 
 // Validation schema for preferences update
 const updatePreferencesSchema = z.object({
-  currency: z.enum(['USD', 'EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD']).optional(),
-  dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'MMM DD, YYYY']).optional(),
+  currency: z.enum(CURRENCY_CODES).optional(),
+  dateFormat: z.enum(DATE_FORMAT_VALUES).optional(),
   theme: z.enum(['light', 'dark']).optional(),
   notifications: z.object({
     budgetAlerts: z.boolean().optional(),

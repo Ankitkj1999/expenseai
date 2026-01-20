@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { CURRENCY_CODES } from '@/lib/constants/currencies';
+import { DATE_FORMAT_VALUES } from '@/lib/constants/dateFormats';
 
 export interface IUserPreferences {
   currency: string;
@@ -48,12 +50,12 @@ const UserSchema = new Schema<IUser>(
       currency: {
         type: String,
         default: 'USD',
-        enum: ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD'],
+        enum: CURRENCY_CODES,
       },
       dateFormat: {
         type: String,
         default: 'MM/DD/YYYY',
-        enum: ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD', 'DD MMM YYYY', 'MMM DD, YYYY'],
+        enum: DATE_FORMAT_VALUES,
       },
       theme: {
         type: String,

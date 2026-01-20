@@ -12,43 +12,24 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  User, 
-  Settings as SettingsIcon, 
-  Database, 
-  Download, 
-  Upload, 
-  Moon, 
-  Sun, 
-  Bell, 
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  User,
+  Settings as SettingsIcon,
+  Database,
+  Download,
+  Upload,
+  Moon,
+  Sun,
+  Bell,
   Globe,
   Calendar,
   AlertCircle,
-  CheckCircle2,
-  Loader2
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const CURRENCIES = [
-  { value: 'USD', label: 'US Dollar ($)', symbol: '$' },
-  { value: 'EUR', label: 'Euro (€)', symbol: '€' },
-  { value: 'GBP', label: 'British Pound (£)', symbol: '£' },
-  { value: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
-  { value: 'JPY', label: 'Japanese Yen (¥)', symbol: '¥' },
-  { value: 'AUD', label: 'Australian Dollar (A$)', symbol: 'A$' },
-  { value: 'CAD', label: 'Canadian Dollar (C$)', symbol: 'C$' },
-  { value: 'CHF', label: 'Swiss Franc (CHF)', symbol: 'CHF' },
-  { value: 'CNY', label: 'Chinese Yuan (¥)', symbol: '¥' },
-  { value: 'SGD', label: 'Singapore Dollar (S$)', symbol: 'S$' },
-];
-
-const DATE_FORMATS = [
-  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (US)', example: '01/20/2026' },
-  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (UK)', example: '20/01/2026' },
-  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (ISO)', example: '2026-01-20' },
-  { value: 'DD MMM YYYY', label: 'DD MMM YYYY', example: '20 Jan 2026' },
-  { value: 'MMM DD, YYYY', label: 'MMM DD, YYYY', example: 'Jan 20, 2026' },
-];
+import { CURRENCIES, getCurrencyByCode } from '@/lib/constants/currencies';
+import { DATE_FORMATS, getDateFormatByValue } from '@/lib/constants/dateFormats';
 
 export default function SettingsPage() {
   // Profile state
@@ -112,8 +93,8 @@ export default function SettingsPage() {
     toast.info('Import feature coming soon');
   };
 
-  const selectedCurrency = CURRENCIES.find(c => c.value === currency);
-  const selectedDateFormat = DATE_FORMATS.find(f => f.value === dateFormat);
+  const selectedCurrency = getCurrencyByCode(currency);
+  const selectedDateFormat = getDateFormatByValue(dateFormat);
 
   return (
     <PageContainer>
@@ -180,8 +161,7 @@ export default function SettingsPage() {
 
                 <div className="flex justify-end">
                   <Button onClick={handleProfileSave} disabled={isLoadingProfile}>
-                    {isLoadingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Save Changes
+                    {isLoadingProfile ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </CardContent>
@@ -315,25 +295,22 @@ export default function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-lg border p-4 opacity-50">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <Label htmlFor="theme">Dark Mode</Label>
-                      <Badge variant={theme === 'dark' ? 'default' : 'secondary'} className="text-xs">
-                        {theme === 'dark' ? 'Active' : 'Inactive'}
+                      <Label htmlFor="theme">Light Mode</Label>
+                      <Badge variant="secondary" className="text-xs">
+                        Coming Soon
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Switch between light and dark theme
+                      Currently using dark theme. Light mode coming soon.
                     </p>
                   </div>
                   <Switch
                     id="theme"
-                    checked={theme === 'dark'}
-                    onCheckedChange={(checked) => {
-                      setTheme(checked ? 'dark' : 'light');
-                      toast.success(`Switched to ${checked ? 'dark' : 'light'} mode`);
-                    }}
+                    checked={false}
+                    disabled
                   />
                 </div>
               </CardContent>
@@ -436,8 +413,7 @@ export default function SettingsPage() {
 
             <div className="flex justify-end">
               <Button onClick={handlePreferencesSave} disabled={isLoadingPreferences}>
-                {isLoadingPreferences && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Preferences
+                {isLoadingPreferences ? 'Saving...' : 'Save Preferences'}
               </Button>
             </div>
           </TabsContent>
