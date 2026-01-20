@@ -11,30 +11,30 @@ export function ParallaxHero() {
     offset: ['start start', 'end start'],
   });
 
-  // Parallax transforms - phone moves faster than text
-  const phoneY = useTransform(scrollYProgress, [0, 1], [0, -500]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -200]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.3, 0.5], [1, 1, 0]);
+  // Very fast parallax for phone - moves out quickly in 2-3 scrolls
+  const phoneY = useTransform(scrollYProgress, [0, 0.4], [0, -1200]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const textScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9]);
 
   return (
-    <div ref={containerRef} className="relative min-h-[150vh] bg-black">
+    <div ref={containerRef} className="relative min-h-[120vh] bg-black">
       {/* Hero Content */}
       <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
         {/* Background Text Layer - Behind Phone */}
         <motion.div
-          style={{ y: textY, opacity: textOpacity }}
+          style={{ y: textY, scale: textScale }}
           className="absolute inset-0 flex items-center justify-center z-0 px-4"
         >
-          <div className="flex items-center justify-center gap-4 md:gap-6 lg:gap-8 whitespace-nowrap">
+          <div className="flex flex-col items-center justify-center gap-2 md:gap-4">
             {/* "Meet" Text */}
             <motion.h1
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
-                duration: 0.8,
+                duration: 1,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="text-[15vw] sm:text-[13vw] md:text-[11vw] lg:text-[10vw] xl:text-[9vw] font-bold leading-none tracking-tight"
+              className="text-[18vw] sm:text-[16vw] md:text-[14vw] lg:text-[12vw] xl:text-[11vw] font-bold leading-none tracking-tight"
               style={{
                 background: 'linear-gradient(135deg, #e0e0e0 0%, #06b6d4 50%, #14b8a6 100%)',
                 WebkitBackgroundClip: 'text',
@@ -47,14 +47,14 @@ export function ParallaxHero() {
 
             {/* "Expense AI" Text */}
             <motion.h1
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
-                duration: 0.8,
-                delay: 0.15,
+                duration: 1,
+                delay: 0.2,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="text-[15vw] sm:text-[13vw] md:text-[11vw] lg:text-[10vw] xl:text-[9vw] font-bold leading-none tracking-tight"
+              className="text-[18vw] sm:text-[16vw] md:text-[14vw] lg:text-[12vw] xl:text-[11vw] font-bold leading-none tracking-tight"
               style={{
                 background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #e0e0e0 100%)',
                 WebkitBackgroundClip: 'text',
@@ -73,7 +73,7 @@ export function ParallaxHero() {
           animate={{ y: 0, opacity: 1 }}
           transition={{
             duration: 1.2,
-            delay: 0.4,
+            delay: 0.8,
             ease: [0.22, 1, 0.36, 1],
           }}
           style={{ y: phoneY }}
