@@ -30,21 +30,32 @@ import {
 import { toast } from 'sonner';
 import { CURRENCIES, getCurrencyByCode } from '@/lib/constants/currencies';
 import { DATE_FORMATS, getDateFormatByValue } from '@/lib/constants/dateFormats';
+import { authApi } from '@/lib/api/auth';
 
 export default function SettingsPage() {
-  // Profile state
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john.doe@example.com');
+  // Loading states
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+
+  // Profile state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Preferences state
   const [currency, setCurrency] = useState('USD');
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   
   const [notifications, setNotifications] = useState({
     budgetAlerts: true,
+    goalReminders: true,
     weeklyReports: false,
     transactionUpdates: true,
     insightNotifications: true,
@@ -52,31 +63,96 @@ export default function SettingsPage() {
 
   // Load user data on mount
   useEffect(() => {
-    // TODO: Fetch user data from API
-    // For now, using mock data
+    async function loadUserData() {
+      try {
+        const user = await authApi.me();
+        if (user) {
+          setName(user.name || '');
+          setEmail(user.email || '');
+          setCurrency(user.preferences?.currency || 'USD');
+          setDateFormat(user.preferences?.dateFormat || 'MM/DD/YYYY');
+          setTheme(user.preferences?.theme || 'dark');
+          setNotifications(user.preferences?.notifications || {
+            budgetAlerts: true,
+            goalReminders: true,
+            weeklyReports: false,
+            transactionUpdates: true,
+            insightNotifications: true,
+          });
+        }
+      } catch (error) {
+        toast.error('Failed to load user data');
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+    
+    loadUserData();
   }, []);
 
   const handleProfileSave = async () => {
+    if (!name.trim() || !email.trim()) {
+      toast.error('Name and email are required');
+      return;
+    }
+
     setIsLoadingProfile(true);
     try {
-      // TODO: Implement API call to update profile
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await authApi.updateProfile({ name, email });
       toast.success('Profile updated successfully');
     } catch (error) {
-      toast.error('Failed to update profile');
+      const message = error instanceof Error ? error.message : 'Failed to update profile';
+      toast.error(message);
     } finally {
       setIsLoadingProfile(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('All password fields are required');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+
+    setIsLoadingPassword(true);
+    try {
+      await authApi.changePassword({ currentPassword, newPassword });
+      toast.success('Password changed successfully');
+      // Clear password fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to change password';
+      toast.error(message);
+    } finally {
+      setIsLoadingPassword(false);
     }
   };
 
   const handlePreferencesSave = async () => {
     setIsLoadingPreferences(true);
     try {
-      // TODO: Implement API call to update preferences
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await authApi.updatePreferences({
+        currency,
+        dateFormat,
+        theme,
+        notifications,
+      });
       toast.success('Preferences updated successfully');
     } catch (error) {
-      toast.error('Failed to update preferences');
+      const message = error instanceof Error ? error.message : 'Failed to update preferences';
+      toast.error(message);
     } finally {
       setIsLoadingPreferences(false);
     }
@@ -186,6 +262,8 @@ export default function SettingsPage() {
                   <Input
                     id="current-password"
                     type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
                   />
                 </div>
@@ -195,6 +273,8 @@ export default function SettingsPage() {
                   <Input
                     id="new-password"
                     type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password"
                   />
                 </div>
@@ -204,6 +284,8 @@ export default function SettingsPage() {
                   <Input
                     id="confirm-password"
                     type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
                   />
                 </div>
@@ -211,8 +293,8 @@ export default function SettingsPage() {
                 <Separator />
 
                 <div className="flex justify-end">
-                  <Button onClick={() => toast.info('Password change coming soon')}>
-                    Update Password
+                  <Button onClick={handlePasswordChange} disabled={isLoadingPassword}>
+                    {isLoadingPassword ? 'Updating...' : 'Update Password'}
                   </Button>
                 </div>
               </CardContent>
