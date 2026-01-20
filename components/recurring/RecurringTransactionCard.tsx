@@ -59,77 +59,65 @@ export function RecurringTransactionCard({
     : '#3B82F6';
 
   const isExpense = transaction.type === 'expense';
+  const Icon = isExpense ? TrendingDown : TrendingUp;
 
   return (
-    <Card 
-      className="hover:shadow-md transition-shadow"
-      style={{ borderLeft: `4px solid ${categoryColor}` }}
-    >
+    <Card className="group relative transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-lg">{transaction.description}</CardTitle>
-              {!transaction.isActive && (
-                <Badge variant="secondary">Paused</Badge>
-              )}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted transition-transform group-hover:scale-105">
+              <Icon className="h-5 w-5" style={{ color: categoryColor }} />
             </div>
-            <CardDescription className="flex items-center gap-2">
-              <div
-                className="p-1 rounded"
-                style={{ backgroundColor: `${categoryColor}20` }}
-              >
-                {isExpense ? (
-                  <TrendingDown className="h-3 w-3" style={{ color: categoryColor }} />
-                ) : (
-                  <TrendingUp className="h-3 w-3" style={{ color: categoryColor }} />
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">{transaction.description}</CardTitle>
+                {!transaction.isActive && (
+                  <Badge variant="secondary" className="text-xs">Paused</Badge>
                 )}
               </div>
-              {categoryName} • {accountName}
-            </CardDescription>
+              <CardDescription className="text-xs">
+                {categoryName} • {accountName}
+              </CardDescription>
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Amount */}
           <div>
-            <p className={`text-2xl font-bold ${isExpense ? 'text-red-600' : 'text-green-600'}`}>
+            <p className="text-xs text-muted-foreground mb-1">Amount</p>
+            <p className={`text-xl font-bold ${isExpense ? 'text-red-600' : 'text-green-600'}`}>
               {isExpense ? '-' : '+'}{formatCurrency(transaction.amount)}
             </p>
           </div>
 
-          {/* Frequency Info */}
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <Repeat className="h-4 w-4" />
-              <span>{getFrequencyLabel()}</span>
+          {/* Frequency & Next Occurrence */}
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                <Repeat className="h-3 w-3" />
+                Frequency
+              </p>
+              <p className="text-sm font-medium">{getFrequencyLabel()}</p>
             </div>
-          </div>
-
-          {/* Next Occurrence */}
-          <div className="flex items-center justify-between text-sm pt-2 border-t">
-            <span className="text-muted-foreground">Next occurrence:</span>
-            <div className="flex items-center gap-1 font-medium">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(transaction.nextOccurrence)}</span>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Next Date
+              </p>
+              <p className="text-sm font-medium">{formatDate(transaction.nextOccurrence)}</p>
             </div>
           </div>
 
           {/* Date Range */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground pt-2 border-t">
             <span>Started: {formatDate(transaction.startDate)}</span>
-            {transaction.endDate && (
-              <>
-                <span>•</span>
-                <span>Ends: {formatDate(transaction.endDate)}</span>
-              </>
-            )}
-            {!transaction.endDate && (
-              <>
-                <span>•</span>
-                <span>No end date</span>
-              </>
+            {transaction.endDate ? (
+              <span> • Ends: {formatDate(transaction.endDate)}</span>
+            ) : (
+              <span> • No end date</span>
             )}
           </div>
 
@@ -138,39 +126,42 @@ export function RecurringTransactionCard({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="flex-1 h-8"
               onClick={() => onEdit(transaction)}
               disabled={isLoading}
             >
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit className="mr-1.5 h-3.5 w-3.5" />
               Edit
             </Button>
             {transaction.isActive ? (
               <Button
                 variant="outline"
                 size="sm"
+                className="h-8 px-3"
                 onClick={() => onPause(transaction._id)}
                 disabled={isLoading}
               >
-                <Pause className="h-4 w-4" />
+                <Pause className="h-3.5 w-3.5" />
               </Button>
             ) : (
               <Button
                 variant="outline"
                 size="sm"
+                className="h-8 px-3"
                 onClick={() => onResume(transaction._id)}
                 disabled={isLoading}
               >
-                <Play className="h-4 w-4" />
+                <Play className="h-3.5 w-3.5" />
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
+              className="h-8 px-3"
               onClick={() => onDelete(transaction._id, transaction.description)}
               disabled={isLoading}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
