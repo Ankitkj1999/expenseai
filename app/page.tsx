@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
+import { ParallaxHero } from '@/components/landing/ParallaxHero';
 import { useState } from 'react';
 
 const fadeInUp = {
@@ -228,70 +229,8 @@ export default function LandingPage() {
         </div>
       </motion.nav>
 
-      {/* Hero Section */}
-      <section className="relative z-10 container mx-auto px-4 py-20 md:py-32">
-        <motion.div
-          initial="initial"
-          animate="animate"
-          variants={staggerContainer}
-          className="max-w-4xl mx-auto text-center"
-        >
-          <motion.div variants={fadeInUp} className="mb-6">
-            <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
-              ✨ AI-Powered Expense Tracking
-            </span>
-          </motion.div>
-
-          <motion.h1
-            variants={fadeInUp}
-            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-chart-3 bg-clip-text text-transparent"
-          >
-            Smart Money Management
-            <br />
-            Made Simple
-          </motion.h1>
-
-          <motion.p
-            variants={fadeInUp}
-            className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto"
-          >
-            Track expenses, set budgets, and gain insights with the power of AI.
-            Your personal finance assistant that learns and adapts to your spending habits.
-          </motion.p>
-
-          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="#features">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary/20 hover:bg-primary/10 hover:text-primary">
-                Learn More
-              </Button>
-            </Link>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            variants={fadeInUp}
-            className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                className="flex flex-col items-center"
-              >
-                <stat.icon className="h-8 w-8 text-primary mb-2" />
-                <div className="text-3xl font-bold">{stat.value}</div>
-                <div className="text-muted-foreground">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
+      {/* Parallax Hero Section */}
+      <ParallaxHero />
 
       {/* Features Section */}
       <section id="features" className="relative z-10 container mx-auto px-4 py-20">
