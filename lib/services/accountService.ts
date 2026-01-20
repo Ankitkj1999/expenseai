@@ -8,7 +8,7 @@ import type { IAccount } from '@/lib/db/models/Account';
 
 export interface CreateAccountDto {
   name: string;
-  type: 'cash' | 'bank' | 'credit' | 'wallet';
+  type: 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
   balance?: number;
   currency?: string;
   icon?: string;
@@ -17,7 +17,7 @@ export interface CreateAccountDto {
 
 export interface UpdateAccountDto {
   name?: string;
-  type?: 'cash' | 'bank' | 'credit' | 'wallet';
+  type?: 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
   balance?: number;
   currency?: string;
   icon?: string;
