@@ -229,10 +229,14 @@ export async function resumeRecurringTransaction(
 /**
  * Process due recurring transactions (called by cron job)
  * Creates actual transactions from recurring templates
+ *
+ * Includes idempotency protection to prevent duplicate processing
+ * if the cron job runs multiple times within the same hour.
  */
 export async function processDueRecurringTransactions(): Promise<{
   processed: number;
   failed: number;
+  skipped: number;
   errors: Array<{ id: string; error: string }>;
 }> {
   await connectDB();
@@ -241,6 +245,7 @@ export async function processDueRecurringTransactions(): Promise<{
   const results = {
     processed: 0,
     failed: 0,
+    skipped: 0,
     errors: [] as Array<{ id: string; error: string }>,
   };
 
@@ -254,10 +259,30 @@ export async function processDueRecurringTransactions(): Promise<{
     ],
   });
 
+  console.log(`Found ${dueTransactions.length} due recurring transactions to process`);
+
   for (const recurring of dueTransactions) {
     try {
+      // Idempotency check: Skip if already processed in the last hour
+      // This prevents duplicate transactions if cron runs multiple times
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      if (recurring.lastGeneratedDate && recurring.lastGeneratedDate > oneHourAgo) {
+        console.log(`Skipping recurring transaction ${recurring._id} - already processed recently`);
+        results.skipped++;
+        continue;
+      }
+
+      // Calculate next occurrence BEFORE creating transaction
+      // This ensures we don't lose the calculation if transaction creation fails
+      const nextOccurrence = calculateNextOccurrence(
+        recurring.nextOccurrence,
+        recurring.frequency,
+        recurring.interval,
+        recurring.metadata
+      );
+
       // Create actual transaction
-      await createTransaction(recurring.userId.toString(), {
+      const transaction = await createTransaction(recurring.userId.toString(), {
         type: recurring.type,
         amount: recurring.amount,
         description: recurring.description,
@@ -268,18 +293,13 @@ export async function processDueRecurringTransactions(): Promise<{
         aiGenerated: false,
         metadata: {
           notes: `Auto-generated from recurring transaction: ${recurring.description}`,
+          recurringTransactionId: recurring._id.toString(),
         },
       });
 
-      // Calculate next occurrence
-      const nextOccurrence = calculateNextOccurrence(
-        recurring.nextOccurrence,
-        recurring.frequency,
-        recurring.interval,
-        recurring.metadata
-      );
+      console.log(`Created transaction ${transaction._id} from recurring ${recurring._id}`);
 
-      // Update recurring transaction
+      // Update recurring transaction with atomic operation
       await RecurringTransaction.findByIdAndUpdate(recurring._id, {
         lastGeneratedDate: now,
         nextOccurrence,
@@ -291,6 +311,7 @@ export async function processDueRecurringTransactions(): Promise<{
 
       results.processed++;
     } catch (error) {
+      console.error(`Error processing recurring transaction ${recurring._id}:`, error);
       results.failed++;
       results.errors.push({
         id: recurring._id.toString(),
@@ -298,6 +319,12 @@ export async function processDueRecurringTransactions(): Promise<{
       });
     }
   }
+
+  console.log('Recurring transaction processing complete:', {
+    processed: results.processed,
+    failed: results.failed,
+    skipped: results.skipped,
+  });
 
   return results;
 }

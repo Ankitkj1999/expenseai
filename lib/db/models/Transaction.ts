@@ -19,6 +19,7 @@ export interface ITransaction extends Document {
   metadata: {
     location?: string;
     notes?: string;
+    [key: string]: unknown;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -87,8 +88,8 @@ const TransactionSchema = new Schema<ITransaction>(
       default: false,
     },
     metadata: {
-      location: String,
-      notes: String,
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   {
