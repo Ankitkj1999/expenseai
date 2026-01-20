@@ -97,15 +97,15 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col p-0">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b">
+      <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col p-0 h-full">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b sm:px-6 sm:pt-6 sm:pb-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shrink-0">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            <div>
-              <SheetTitle className="text-xl">AI Assistant</SheetTitle>
-              <SheetDescription className="text-xs">
+            <div className="min-w-0">
+              <SheetTitle className="text-lg sm:text-xl">AI Assistant</SheetTitle>
+              <SheetDescription className="text-xs truncate">
                 Ask me anything about your finances
               </SheetDescription>
             </div>
@@ -115,18 +115,18 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
         {/* Messages Area */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 py-4"
+          className="flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
         >
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                <Sparkles className="h-8 w-8 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center h-full text-center px-2">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted mb-3 sm:mb-4">
+                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              <h3 className="text-base sm:text-lg font-medium mb-2">Start a conversation</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mb-4 sm:mb-6">
                 I can help you track expenses, analyze spending, check budgets, and more.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-2 justify-center max-w-md">
                 <Badge
                   variant="outline"
                   className="cursor-pointer hover:bg-muted"
@@ -179,7 +179,7 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
         </div>
 
         {/* Input Area */}
-        <div className="border-t px-6 py-4">
+        <div className="border-t px-4 py-3 sm:px-6 sm:py-4">
           <ChatInput
             onSend={handleSend}
             isLoading={isLoading}

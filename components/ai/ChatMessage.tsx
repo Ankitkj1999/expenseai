@@ -17,38 +17,38 @@ export function ChatMessage({ role, content, isStreaming }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        'flex gap-3 mb-4',
+        'flex gap-2 mb-3 sm:gap-3 sm:mb-4',
         isUser ? 'justify-end' : 'justify-start'
       )}
     >
       {!isUser && (
-        <Avatar className="h-8 w-8 shrink-0">
+        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
           <AvatarFallback className="bg-primary text-primary-foreground">
-            <Bot className="h-4 w-4" />
+            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </AvatarFallback>
         </Avatar>
       )}
 
       <Card
         className={cn(
-          'max-w-[80%] px-4 py-3',
+          'max-w-[85%] sm:max-w-[80%] px-3 py-2 sm:px-4 sm:py-3',
           isUser
             ? 'bg-primary text-primary-foreground'
             : 'bg-muted'
         )}
       >
-        <div className="text-sm whitespace-pre-wrap break-words">
+        <div className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
           {content}
           {isStreaming && (
-            <span className="inline-block w-1 h-4 ml-1 bg-current animate-pulse" />
+            <span className="inline-block w-0.5 h-3 sm:h-4 ml-1 bg-current animate-pulse" />
           )}
         </div>
       </Card>
 
       {isUser && (
-        <Avatar className="h-8 w-8 shrink-0">
+        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
           <AvatarFallback className="bg-muted">
-            <User className="h-4 w-4" />
+            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </AvatarFallback>
         </Avatar>
       )}

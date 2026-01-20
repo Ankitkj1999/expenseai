@@ -39,19 +39,19 @@ export function ChatInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={isLoading}
-        className="min-h-[60px] max-h-[120px] resize-none"
+        className="min-h-[48px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none text-sm"
         rows={2}
       />
       <Button
         onClick={handleSend}
         disabled={!input.trim() || isLoading}
         size="icon"
-        className="h-[60px] w-[60px] shrink-0"
+        className="h-[48px] w-[48px] sm:h-[60px] sm:w-[60px] shrink-0"
       >
         {isLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
+          <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
         ) : (
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4 sm:h-5 sm:w-5" />
         )}
       </Button>
     </div>
