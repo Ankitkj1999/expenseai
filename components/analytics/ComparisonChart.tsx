@@ -23,11 +23,11 @@ import { useAnalyticsComparison } from "@/lib/hooks/useAnalytics";
 const chartConfig = {
   current: {
     label: "Current Period",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(217 91% 60%)", // Bright blue for current
   },
   previous: {
     label: "Previous Period",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(0 0% 45%)", // Gray for previous/comparison
   },
 } satisfies ChartConfig;
 
