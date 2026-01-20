@@ -33,7 +33,7 @@ import { toast } from 'sonner';
 import { CURRENCIES, getCurrencyByCode } from '@/lib/constants/currencies';
 import { DATE_FORMATS, getDateFormatByValue } from '@/lib/constants/dateFormats';
 import { authApi } from '@/lib/api/auth';
-import { categoriesApi } from '@/lib/api/categories';
+import { useCategories } from '@/lib/hooks/useCategories';
 import { CategoryDialog } from '@/components/forms/CategoryDialog';
 import { CategoryCard } from '@/components/forms/CategoryCard';
 import type { CategoryResponse } from '@/types';
@@ -68,8 +68,7 @@ export default function SettingsPage() {
   });
 
   // Categories state
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const { data: categories = [], isLoading: isLoadingCategories } = useCategories();
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryResponse | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'expense' | 'income'>('all');
@@ -102,34 +101,6 @@ export default function SettingsPage() {
     
     loadUserData();
   }, []);
-
-  // Load categories
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const data = await categoriesApi.list();
-        setCategories(data);
-      } catch (error) {
-        toast.error('Failed to load categories');
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    }
-    
-    loadCategories();
-  }, []);
-
-  const handleCategorySuccess = async () => {
-    setIsLoadingCategories(true);
-    try {
-      const data = await categoriesApi.list();
-      setCategories(data);
-    } catch (error) {
-      toast.error('Failed to reload categories');
-    } finally {
-      setIsLoadingCategories(false);
-    }
-  };
 
   const handleEditCategory = (category: CategoryResponse) => {
     setSelectedCategory(category);
@@ -602,7 +573,6 @@ export default function SettingsPage() {
                         key={category._id}
                         category={category}
                         onEdit={handleEditCategory}
-                        onDelete={handleCategorySuccess}
                       />
                     ))}
                   </div>
@@ -743,7 +713,6 @@ export default function SettingsPage() {
         open={categoryDialogOpen}
         onOpenChange={setCategoryDialogOpen}
         category={selectedCategory}
-        onSuccess={handleCategorySuccess}
       />
     </PageContainer>
   );

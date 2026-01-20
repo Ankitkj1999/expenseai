@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { categoriesApi } from '@/lib/api/categories';
+import { useCreateCategory, useUpdateCategory } from '@/lib/hooks/useCategories';
 import type { CategoryResponse } from '@/types';
 import {
   Utensils,
@@ -115,8 +115,10 @@ interface CategoryDialogProps {
 }
 
 export function CategoryDialog({ open, onOpenChange, category, onSuccess }: CategoryDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const isEditing = !!category;
+  
+  const createMutation = useCreateCategory();
+  const updateMutation = useUpdateCategory();
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -148,13 +150,12 @@ export function CategoryDialog({ open, onOpenChange, category, onSuccess }: Cate
   }, [category, form]);
 
   const onSubmit = async (data: CategoryFormData) => {
-    setIsLoading(true);
     try {
       if (isEditing) {
-        await categoriesApi.update(category._id, data);
+        await updateMutation.mutateAsync({ id: category._id, data });
         toast.success('Category updated successfully');
       } else {
-        await categoriesApi.create(data);
+        await createMutation.mutateAsync(data);
         toast.success('Category created successfully');
       }
       onOpenChange(false);
@@ -163,10 +164,10 @@ export function CategoryDialog({ open, onOpenChange, category, onSuccess }: Cate
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save category';
       toast.error(message);
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   const selectedIcon = form.watch('icon');
   const selectedColor = form.watch('color');

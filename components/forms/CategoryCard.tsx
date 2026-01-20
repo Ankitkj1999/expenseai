@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Edit, Trash2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import { categoriesApi } from '@/lib/api/categories';
+import { useDeleteCategory } from '@/lib/hooks/useCategories';
 import type { CategoryResponse } from '@/types';
 import * as Icons from 'lucide-react';
 
@@ -28,37 +28,31 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteMutation = useDeleteCategory();
 
   const handleDelete = async () => {
-    setIsDeleting(true);
     try {
-      await categoriesApi.delete(category._id);
+      await deleteMutation.mutateAsync(category._id);
       toast.success('Category deleted successfully');
       setShowDeleteDialog(false);
       onDelete?.();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete category';
       toast.error(message);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
-  // Get the icon component dynamically
-  const getIconComponent = (iconName: string) => {
+  // Get the icon component dynamically - memoized to prevent recreation on every render
+  const IconComponent = useMemo(() => {
     // Convert icon name to PascalCase (e.g., 'shopping-cart' -> 'ShoppingCart')
-    const pascalCase = iconName
+    const pascalCase = category.icon
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join('');
     
     // @ts-expect-error - Dynamic icon lookup
-    const IconComponent = Icons[pascalCase] || Icons.Circle;
-    return IconComponent;
-  };
-
-  const IconComponent = getIconComponent(category.icon);
+    return Icons[pascalCase] || Icons.Circle;
+  }, [category.icon]);
 
   return (
     <>
@@ -122,13 +116,13 @@ export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={isDeleting}
+              disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

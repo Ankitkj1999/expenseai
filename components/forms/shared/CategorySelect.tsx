@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,8 +8,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api } from '@/lib/api/client';
-import type { CategoryResponse, CategoryType } from '@/types';
+import { useCategories } from '@/lib/hooks/useCategories';
+import type { CategoryType } from '@/types';
 import { 
   Utensils, Car, ShoppingCart, Receipt, Heart, Film, 
   Home, BookOpen, Briefcase, TrendingUp, Gift 
@@ -37,33 +36,7 @@ export function CategorySelect({
   placeholder = 'Select category',
   disabled = false,
 }: CategorySelectProps) {
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        setIsLoading(true);
-        const response = await api.get<{ data: { categories: CategoryResponse[] } }>(
-          'categories'
-        );
-        let cats = response.data.data.categories;
-        
-        // Filter by type if specified
-        if (type) {
-          cats = cats.filter(cat => cat.type === type);
-        }
-        
-        setCategories(cats);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchCategories();
-  }, [type]);
+  const { data: categories = [], isLoading } = useCategories(type);
 
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;
