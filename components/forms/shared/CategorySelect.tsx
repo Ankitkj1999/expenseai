@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   Select,
   SelectContent,
@@ -10,16 +11,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCategories } from '@/lib/hooks/useCategories';
 import type { CategoryType } from '@/types';
-import { 
-  Utensils, Car, ShoppingCart, Receipt, Heart, Film, 
-  Home, BookOpen, Briefcase, TrendingUp, Gift 
-} from 'lucide-react';
-
-// Icon mapping for categories
-const CATEGORY_ICONS = {
-  Utensils, Car, ShoppingCart, Receipt, Heart, Film,
-  Home, BookOpen, Briefcase, TrendingUp, Gift,
-} as const;
+import * as Icons from 'lucide-react';
 
 interface CategorySelectProps {
   value?: string;
@@ -38,45 +30,65 @@ export function CategorySelect({
 }: CategorySelectProps) {
   const { data: categories = [], isLoading } = useCategories(type);
 
+  // Helper function to get icon component from icon name
+  const getIconComponent = (iconName: string) => {
+    const pascalCase = iconName
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join('');
+    
+    // @ts-expect-error - Dynamic icon lookup
+    return Icons[pascalCase] || Icons.Circle;
+  };
+
+  const selectedCategory = useMemo(() => 
+    categories.find(cat => cat._id === value), 
+    [categories, value]
+  );
+
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;
   }
-
-  const selectedCategory = categories.find(cat => cat._id === value);
-  const SelectedIcon = selectedCategory
-    ? CATEGORY_ICONS[selectedCategory.icon as keyof typeof CATEGORY_ICONS]
-    : null;
 
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder}>
-          {selectedCategory && (
-            <div className="flex items-center gap-2">
-              {SelectedIcon && (
-                <SelectedIcon
-                  className="h-4 w-4"
-                  style={{ color: selectedCategory.color }}
-                />
-              )}
-              <span>{selectedCategory.name}</span>
-            </div>
-          )}
+          {selectedCategory && (() => {
+            const IconComponent = getIconComponent(selectedCategory.icon);
+            return (
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center justify-center h-6 w-6 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: selectedCategory.color + '20' }}
+                >
+                  <IconComponent 
+                    className="h-3.5 w-3.5" 
+                    style={{ color: selectedCategory.color }} 
+                  />
+                </div>
+                <span>{selectedCategory.name}</span>
+              </div>
+            );
+          })()}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {categories.map((category) => {
-          const IconComponent = CATEGORY_ICONS[category.icon as keyof typeof CATEGORY_ICONS];
+          const IconComponent = getIconComponent(category.icon);
           
           return (
             <SelectItem key={category._id} value={category._id}>
               <div className="flex items-center gap-2">
-                {IconComponent && (
-                  <IconComponent
-                    className="h-4 w-4"
-                    style={{ color: category.color }}
+                <div
+                  className="flex items-center justify-center h-6 w-6 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: category.color + '20' }}
+                >
+                  <IconComponent 
+                    className="h-3.5 w-3.5" 
+                    style={{ color: category.color }} 
                   />
-                )}
+                </div>
                 <span>{category.name}</span>
               </div>
             </SelectItem>

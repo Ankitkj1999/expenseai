@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, FieldLabel, FieldDescription, FieldGroup } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategorySelect } from './shared/CategorySelect';
 import { AccountSelect } from './shared/AccountSelect';
 import { DatePicker } from './shared/DatePicker';
@@ -106,30 +106,29 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
         {/* Transaction Type */}
         <Field>
           <FieldLabel>Transaction Type</FieldLabel>
-          <ToggleGroup
-            type="single"
+          <Tabs
             value={transactionType}
-            onValueChange={(value) => {
-              if (value) setValue('type', value as 'expense' | 'income');
-            }}
-            className="grid grid-cols-2 gap-3"
-            disabled={isLoading}
+            onValueChange={(value) => setValue('type', value as 'expense' | 'income')}
           >
-            <ToggleGroupItem
-              value="expense"
-              className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-red-500/10 data-[state=on]:text-red-600 data-[state=on]:border-red-500 border-2"
-            >
-              <TrendingDown className="h-5 w-5" />
-              <span className="text-sm font-medium">Expense</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="income"
-              className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-green-500/10 data-[state=on]:text-green-600 data-[state=on]:border-green-500 border-2"
-            >
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-sm font-medium">Income</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger
+                value="expense"
+                disabled={isLoading}
+                className="data-[state=active]:text-red-600"
+              >
+                <TrendingDown className="h-4 w-4" />
+                Expense
+              </TabsTrigger>
+              <TabsTrigger
+                value="income"
+                disabled={isLoading}
+                className="data-[state=active]:text-green-600"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Income
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           {errors.type && (
             <FieldDescription className="text-destructive">
               {errors.type.message}
@@ -145,6 +144,7 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
             type="number"
             step="0.01"
             placeholder="0.00"
+            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             {...register('amount', {
               required: 'Amount is required',
               valueAsNumber: true,
@@ -154,6 +154,7 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
               },
             })}
             disabled={isLoading}
+            onWheel={(e) => e.currentTarget.blur()}
           />
           {errors.amount && (
             <FieldDescription className="text-destructive">
@@ -254,7 +255,7 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
               type="number"
               min="1"
               placeholder="1"
-              className="w-24"
+              className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               {...register('interval', {
                 valueAsNumber: true,
                 min: {
@@ -263,6 +264,7 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
                 },
               })}
               disabled={isLoading}
+              onWheel={(e) => e.currentTarget.blur()}
             />
             <span className="text-sm text-muted-foreground">
               {frequency === 'daily' && 'day(s)'}
@@ -317,6 +319,7 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
               min="1"
               max="31"
               placeholder="1"
+              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               {...register('metadata.dayOfMonth', {
                 valueAsNumber: true,
                 min: {
@@ -329,6 +332,7 @@ export function RecurringTransactionForm({ mode, initialData, onSuccess }: Recur
                 },
               })}
               disabled={isLoading}
+              onWheel={(e) => e.currentTarget.blur()}
             />
             <FieldDescription>
               Which day of the month to repeat on (1-31)

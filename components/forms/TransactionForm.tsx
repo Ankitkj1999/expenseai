@@ -185,7 +185,7 @@ export function TransactionForm({
             type="number"
             step="0.01"
             placeholder="0.00"
-            className="text-lg font-semibold"
+            className="text-lg font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             {...register('amount', { valueAsNumber: true })}
             disabled={isLoading}
             onWheel={(e) => e.currentTarget.blur()}
