@@ -8,7 +8,7 @@ import { hashPassword, generateToken } from '@/lib/utils/auth';
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  name: z.string().optional(), // Accept name but don't store it yet
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
 });
 
 export const POST = withDb(async (request: NextRequest) => {
@@ -25,7 +25,7 @@ export const POST = withDb(async (request: NextRequest) => {
     );
   }
 
-  const { email, password } = validationResult.data;
+  const { email, password, name } = validationResult.data;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
@@ -40,10 +40,23 @@ export const POST = withDb(async (request: NextRequest) => {
   // Hash password
   const passwordHash = await hashPassword(password);
 
-  // Create new user
+  // Create new user with default preferences
   const user = await User.create({
     email,
+    name,
     passwordHash,
+    preferences: {
+      currency: 'USD',
+      dateFormat: 'MM/DD/YYYY',
+      theme: 'light',
+      notifications: {
+        budgetAlerts: true,
+        goalReminders: true,
+        weeklyReports: false,
+        transactionUpdates: true,
+        insightNotifications: true,
+      },
+    },
   });
 
   // Generate JWT token
@@ -56,6 +69,8 @@ export const POST = withDb(async (request: NextRequest) => {
       data: {
         id: user._id,
         email: user.email,
+        name: user.name,
+        preferences: user.preferences,
         createdAt: user.createdAt,
       },
       message: 'User registered successfully',
