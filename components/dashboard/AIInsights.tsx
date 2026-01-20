@@ -1,8 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, TrendingUp, ArrowUpRight, MessageCircle } from 'lucide-react';
+import { Sparkles, ArrowUpRight, MessageCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { insightsApi } from '@/lib/api/insights';
+import { IAIInsight, IInsight } from '@/lib/db/models/AIInsight';
+import { toast } from 'sonner';
 
 interface InsightCardProps {
   type: 'alert' | 'advice';
@@ -60,19 +65,84 @@ function InsightCard({ type, title, description }: InsightCardProps) {
 }
 
 export function AIInsights() {
-  // Hardcoded insights for now
-  const insights = [
-    {
-      type: 'alert' as const,
-      title: 'Spending increased by 12% last week',
-      description: 'Your expenses are higher than usual',
-    },
-    {
-      type: 'advice' as const,
-      title: 'Cash allocation reached $9M this month',
-      description: 'Consider diversifying your portfolio',
-    },
-  ];
+  const [insights, setInsights] = useState<IInsight[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Fetch insights on mount
+  useEffect(() => {
+    fetchInsights();
+  }, []);
+
+  const fetchInsights = async () => {
+    try {
+      setIsLoading(true);
+      const data = await insightsApi.list();
+      
+      // Handle different response structures
+      let allInsights: IInsight[] = [];
+      
+      if (Array.isArray(data)) {
+        // If data is an array of insight documents
+        allInsights = data.flatMap(doc => doc.insights || []);
+      } else if (data && typeof data === 'object' && 'insights' in data) {
+        // If data is a single insight document
+        allInsights = (data as IAIInsight).insights || [];
+      }
+      
+      // Filter unread insights and sort by priority
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      const sortedInsights = allInsights
+        .filter(insight => !insight.isRead)
+        .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+        .slice(0, 3); // Show top 3 insights
+      
+      setInsights(sortedInsights);
+    } catch (error) {
+      console.error('Failed to fetch insights:', error);
+      toast.error('Failed to load insights');
+      // Set empty insights on error
+      setInsights([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGenerateInsights = async () => {
+    try {
+      setIsGenerating(true);
+      await insightsApi.generate();
+      toast.success('New insights generated!');
+      await fetchInsights();
+    } catch (error) {
+      console.error('Failed to generate insights:', error);
+      toast.error('Failed to generate insights');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="h-full relative overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full relative overflow-hidden">
@@ -89,31 +159,40 @@ export function AIInsights() {
             </div>
             <div>
               <CardTitle className="text-xl bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
-                Weekly AI Insight
+                AI Insights
               </CardTitle>
               <CardDescription className="mt-1">
-                Generated insights from your finance
+                Generated insights from your finances
               </CardDescription>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-9 w-9 hover:bg-primary/10 transition-colors"
+            onClick={handleGenerateInsights}
+            disabled={isGenerating}
           >
-            <MessageCircle className="h-5 w-5" />
+            <RefreshCw className={`h-5 w-5 ${isGenerating ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 relative z-10">
-        {insights.map((insight, index) => (
-          <InsightCard
-            key={index}
-            type={insight.type}
-            title={insight.title}
-            description={insight.description}
-          />
-        ))}
+        {insights.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">No insights available yet.</p>
+            <p className="text-xs mt-1">Click the refresh button to generate insights.</p>
+          </div>
+        ) : (
+          insights.map((insight, index) => (
+            <InsightCard
+              key={index}
+              type={insight.category === 'alert' ? 'alert' : 'advice'}
+              title={insight.title}
+              description={insight.description}
+            />
+          ))
+        )}
       </CardContent>
     </Card>
   );
