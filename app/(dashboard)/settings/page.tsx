@@ -25,12 +25,18 @@ import {
   Globe,
   Calendar,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Tag,
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CURRENCIES, getCurrencyByCode } from '@/lib/constants/currencies';
 import { DATE_FORMATS, getDateFormatByValue } from '@/lib/constants/dateFormats';
 import { authApi } from '@/lib/api/auth';
+import { categoriesApi } from '@/lib/api/categories';
+import { CategoryDialog } from '@/components/forms/CategoryDialog';
+import { CategoryCard } from '@/components/forms/CategoryCard';
+import type { CategoryResponse } from '@/types';
 
 export default function SettingsPage() {
   // Loading states
@@ -61,6 +67,13 @@ export default function SettingsPage() {
     insightNotifications: true,
   });
 
+  // Categories state
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryResponse | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'expense' | 'income'>('all');
+
   // Load user data on mount
   useEffect(() => {
     async function loadUserData() {
@@ -89,6 +102,44 @@ export default function SettingsPage() {
     
     loadUserData();
   }, []);
+
+  // Load categories
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await categoriesApi.list();
+        setCategories(data);
+      } catch (error) {
+        toast.error('Failed to load categories');
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    }
+    
+    loadCategories();
+  }, []);
+
+  const handleCategorySuccess = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const data = await categoriesApi.list();
+      setCategories(data);
+    } catch (error) {
+      toast.error('Failed to reload categories');
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  const handleEditCategory = (category: CategoryResponse) => {
+    setSelectedCategory(category);
+    setCategoryDialogOpen(true);
+  };
+
+  const handleCreateCategory = () => {
+    setSelectedCategory(null);
+    setCategoryDialogOpen(true);
+  };
 
   const handleProfileSave = async () => {
     if (!name.trim() || !email.trim()) {
@@ -171,6 +222,12 @@ export default function SettingsPage() {
   const selectedCurrency = getCurrencyByCode(currency);
   const selectedDateFormat = getDateFormatByValue(dateFormat);
 
+  // Filter categories
+  const filteredCategories = categories.filter((cat) => {
+    if (categoryFilter === 'all') return true;
+    return cat.type === categoryFilter;
+  });
+
   return (
     <PageContainer>
       <div className="space-y-6">
@@ -183,7 +240,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -191,6 +248,10 @@ export default function SettingsPage() {
             <TabsTrigger value="preferences" className="gap-2">
               <SettingsIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Preferences</span>
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-2">
+              <Tag className="h-4 w-4" />
+              <span className="hidden sm:inline">Categories</span>
             </TabsTrigger>
             <TabsTrigger value="data" className="gap-2">
               <Database className="h-4 w-4" />
@@ -483,6 +544,80 @@ export default function SettingsPage() {
             </div>
           </TabsContent>
 
+          {/* Categories Tab */}
+          <TabsContent value="categories" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <CardTitle>Manage Categories</CardTitle>
+                      <CardDescription>
+                        Create and manage custom categories for your transactions
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Button onClick={handleCreateCategory} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">New Category</span>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Filter Tabs */}
+                <Tabs value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as 'all' | 'expense' | 'income')}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="expense">Expenses</TabsTrigger>
+                    <TabsTrigger value="income">Income</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {/* Categories Grid */}
+                {isLoadingCategories ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {[...Array(6)].map((_, i) => (
+                      <Skeleton key={i} className="h-20" />
+                    ))}
+                  </div>
+                ) : filteredCategories.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No categories found</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {categoryFilter === 'all'
+                        ? 'Create your first custom category to get started'
+                        : `No ${categoryFilter} categories yet`}
+                    </p>
+                    <Button onClick={handleCreateCategory} className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Create Category
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredCategories.map((category) => (
+                      <CategoryCard
+                        key={category._id}
+                        category={category}
+                        onEdit={handleEditCategory}
+                        onDelete={handleCategorySuccess}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    System categories cannot be edited or deleted. You can create custom categories with your preferred icons and colors.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Data Tab */}
           <TabsContent value="data" className="space-y-4">
             <Card>
@@ -602,6 +737,14 @@ export default function SettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Category Dialog */}
+      <CategoryDialog
+        open={categoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
+        category={selectedCategory}
+        onSuccess={handleCategorySuccess}
+      />
     </PageContainer>
   );
 }
