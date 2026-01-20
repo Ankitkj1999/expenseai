@@ -91,10 +91,12 @@ export const analyticsApi = {
    * Get spending trends over time
    */
   getTrends: async (params?: TrendsParams): Promise<TrendData[]> => {
-    const response = await api.get<ApiResponse<TrendData[]>>('analytics/trends', {
-      params,
-    });
-    return response.data.data;
+    const response = await api.get<{ success: boolean; data: { data: TrendData[]; count: number } }>(
+      'analytics/trends',
+      { params }
+    );
+    // The API returns { success: true, data: { data: [...], count: X } }
+    return response.data.data.data;
   },
 
   /**

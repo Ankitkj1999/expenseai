@@ -36,11 +36,11 @@ import { useAnalyticsTrends } from "@/lib/hooks/useAnalytics";
 const chartConfig = {
   income: {
     label: "Income",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(142 76% 36%)", // Green for income
   },
   expense: {
     label: "Expense",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(0 84% 60%)", // Red for expense
   },
 } satisfies ChartConfig;
 
@@ -221,6 +221,40 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
               </p>
             </div>
           </div>
+        ) : trends.length === 1 ? (
+          <div className="flex h-[300px] flex-col items-center justify-center gap-4 text-center">
+            <div className="space-y-2">
+              <div className="rounded-full bg-muted p-3 mx-auto w-fit">
+                <TrendingUp className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Single data point</p>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  Add more transactions over time to see trends. Currently showing aggregated data for {formatDate(trends[0].date)}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 w-full max-w-md">
+              <div className="space-y-1 text-center">
+                <p className="text-xs text-muted-foreground">Income</p>
+                <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                  ${trends[0].income.toFixed(2)}
+                </p>
+              </div>
+              <div className="space-y-1 text-center">
+                <p className="text-xs text-muted-foreground">Expense</p>
+                <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+                  ${trends[0].expense.toFixed(2)}
+                </p>
+              </div>
+              <div className="space-y-1 text-center">
+                <p className="text-xs text-muted-foreground">Net</p>
+                <p className={`text-lg font-semibold ${trends[0].net >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  ${trends[0].net.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
         ) : (
           <ChartContainer
             config={chartConfig}
@@ -235,24 +269,24 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                   <stop
                     offset="5%"
                     stopColor="var(--color-income)"
-                    stopOpacity={0.8}
+                    stopOpacity={0.6}
                   />
                   <stop
                     offset="95%"
                     stopColor="var(--color-income)"
-                    stopOpacity={0.1}
+                    stopOpacity={0.05}
                   />
                 </linearGradient>
                 <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
                     stopColor="var(--color-expense)"
-                    stopOpacity={0.8}
+                    stopOpacity={0.6}
                   />
                   <stop
                     offset="95%"
                     stopColor="var(--color-expense)"
-                    stopOpacity={0.1}
+                    stopOpacity={0.05}
                   />
                 </linearGradient>
               </defs>
@@ -297,20 +331,18 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                 }
               />
               <Area
-                dataKey="income"
-                type="natural"
-                fill="url(#fillIncome)"
-                stroke="var(--color-income)"
-                strokeWidth={2}
-                stackId="1"
-              />
-              <Area
                 dataKey="expense"
                 type="natural"
                 fill="url(#fillExpense)"
                 stroke="var(--color-expense)"
                 strokeWidth={2}
-                stackId="2"
+              />
+              <Area
+                dataKey="income"
+                type="natural"
+                fill="url(#fillIncome)"
+                stroke="var(--color-income)"
+                strokeWidth={2}
               />
             </AreaChart>
           </ChartContainer>
