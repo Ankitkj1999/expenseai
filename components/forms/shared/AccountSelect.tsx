@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,8 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api } from '@/lib/api/client';
-import type { AccountResponse } from '@/types';
+import { useAccounts } from '@/lib/hooks/useAccounts';
 import { Wallet, Building2, CreditCard, PiggyBank } from 'lucide-react';
 
 // Icon mapping for account types
@@ -37,33 +36,21 @@ export function AccountSelect({
   disabled = false,
   excludeAccountId,
 }: AccountSelectProps) {
-  const [accounts, setAccounts] = useState<AccountResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: accountsData, isLoading } = useAccounts();
 
-  useEffect(() => {
-    async function fetchAccounts() {
-      try {
-        setIsLoading(true);
-        const response = await api.get<{ data: { accounts: AccountResponse[] } }>(
-          'accounts'
-        );
-        let accs = response.data.data.accounts.filter(acc => acc.isActive);
-        
-        // Exclude specific account if provided (for transfers)
-        if (excludeAccountId) {
-          accs = accs.filter(acc => acc._id !== excludeAccountId);
-        }
-        
-        setAccounts(accs);
-      } catch (error) {
-        console.error('Failed to fetch accounts:', error);
-      } finally {
-        setIsLoading(false);
-      }
+  // Filter active accounts and exclude specific account if needed
+  const accounts = useMemo(() => {
+    if (!accountsData?.accounts) return [];
+    
+    let accs = accountsData.accounts.filter(acc => acc.isActive);
+    
+    // Exclude specific account if provided (for transfers)
+    if (excludeAccountId) {
+      accs = accs.filter(acc => acc._id !== excludeAccountId);
     }
-
-    fetchAccounts();
-  }, [excludeAccountId]);
+    
+    return accs;
+  }, [accountsData, excludeAccountId]);
 
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;

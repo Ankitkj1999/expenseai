@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 
 /**
  * Hook to fetch all accounts with total balance
+ * Accounts are cached for 2 minutes since they change moderately
  */
 export function useAccounts() {
   return useQuery<AccountsListResult>({
     queryKey: queryKeys.accounts,
     queryFn: accountsApi.list,
+    staleTime: 2 * 60 * 1000, // 2 minutes - accounts change moderately
   });
 }
 
