@@ -42,10 +42,15 @@ const chartConfig = {
     label: "Expense",
     color: "hsl(0 84% 60%)", // Red for expense
   },
+  net: {
+    label: "Net Savings",
+    color: "hsl(217 91% 60%)", // Blue for net
+  },
 } satisfies ChartConfig;
 
 type Period = "week" | "month" | "year";
 type GroupBy = "day" | "week" | "month";
+type DataView = "all" | "income" | "expense" | "net";
 
 interface SpendingTrendChartProps {
   defaultPeriod?: Period;
@@ -55,6 +60,7 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
   const isMobile = useIsMobile();
   const [period, setPeriod] = React.useState<Period>(defaultPeriod);
   const [groupBy, setGroupBy] = React.useState<GroupBy>("day");
+  const [dataView, setDataView] = React.useState<DataView>("all");
 
   // Adjust groupBy based on period
   React.useEffect(() => {
@@ -174,32 +180,36 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
           <CardAction>
             <ToggleGroup
               type="single"
-              value={period}
-              onValueChange={(value) => value && setPeriod(value as Period)}
+              value={dataView}
+              onValueChange={(value) => value && setDataView(value as DataView)}
               variant="outline"
               className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
             >
-              <ToggleGroupItem value="year">Last 12 months</ToggleGroupItem>
-              <ToggleGroupItem value="month">Last 30 days</ToggleGroupItem>
-              <ToggleGroupItem value="week">Last 7 days</ToggleGroupItem>
+              <ToggleGroupItem value="all">All</ToggleGroupItem>
+              <ToggleGroupItem value="income">Income</ToggleGroupItem>
+              <ToggleGroupItem value="expense">Expenses</ToggleGroupItem>
+              <ToggleGroupItem value="net">Net Savings</ToggleGroupItem>
             </ToggleGroup>
-            <Select value={period} onValueChange={(value) => setPeriod(value as Period)}>
+            <Select value={dataView} onValueChange={(value) => setDataView(value as DataView)}>
               <SelectTrigger
                 className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
                 size="sm"
-                aria-label="Select a period"
+                aria-label="Select data view"
               >
-                <SelectValue placeholder="Last 30 days" />
+                <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="year" className="rounded-lg">
-                  Last 12 months
+                <SelectItem value="all" className="rounded-lg">
+                  All
                 </SelectItem>
-                <SelectItem value="month" className="rounded-lg">
-                  Last 30 days
+                <SelectItem value="income" className="rounded-lg">
+                  Income
                 </SelectItem>
-                <SelectItem value="week" className="rounded-lg">
-                  Last 7 days
+                <SelectItem value="expense" className="rounded-lg">
+                  Expenses
+                </SelectItem>
+                <SelectItem value="net" className="rounded-lg">
+                  Net Savings
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -260,7 +270,7 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <AreaChart 
+            <AreaChart
               data={trends}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
@@ -286,6 +296,18 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                   <stop
                     offset="95%"
                     stopColor="var(--color-expense)"
+                    stopOpacity={0.05}
+                  />
+                </linearGradient>
+                <linearGradient id="fillNet" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-net)"
+                    stopOpacity={0.6}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-net)"
                     stopOpacity={0.05}
                   />
                 </linearGradient>
@@ -330,20 +352,34 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                   />
                 }
               />
-              <Area
-                dataKey="expense"
-                type="natural"
-                fill="url(#fillExpense)"
-                stroke="var(--color-expense)"
-                strokeWidth={2}
-              />
-              <Area
-                dataKey="income"
-                type="natural"
-                fill="url(#fillIncome)"
-                stroke="var(--color-income)"
-                strokeWidth={2}
-              />
+              {/* Render areas based on selected view */}
+              {(dataView === "all" || dataView === "expense") && (
+                <Area
+                  dataKey="expense"
+                  type="natural"
+                  fill="url(#fillExpense)"
+                  stroke="var(--color-expense)"
+                  strokeWidth={2}
+                />
+              )}
+              {(dataView === "all" || dataView === "income") && (
+                <Area
+                  dataKey="income"
+                  type="natural"
+                  fill="url(#fillIncome)"
+                  stroke="var(--color-income)"
+                  strokeWidth={2}
+                />
+              )}
+              {dataView === "net" && (
+                <Area
+                  dataKey="net"
+                  type="natural"
+                  fill="url(#fillNet)"
+                  stroke="var(--color-net)"
+                  strokeWidth={2}
+                />
+              )}
             </AreaChart>
           </ChartContainer>
         )}

@@ -149,7 +149,7 @@ export function AIInsightsHorizontal() {
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
       
-      <CardHeader className="pb-4 relative z-10">
+      <CardHeader className="pb-2 relative z-10">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="relative p-2 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 ring-1 ring-primary/20">
