@@ -468,11 +468,11 @@ export function TransactionTable({
       <div className="rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="hover:bg-muted/50">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="h-12 px-6">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -493,7 +493,7 @@ export function TransactionTable({
                   className="group"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="py-4 px-6">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
