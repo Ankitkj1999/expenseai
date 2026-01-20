@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { CURRENCY_CODES } from '@/lib/constants/currencies';
 
 export interface IAccount extends Document {
   userId: mongoose.Types.ObjectId;
@@ -23,9 +24,10 @@ const AccountSchema = new Schema<IAccount>(
     },
     name: {
       type: String,
-      required: true,
+      required: [true, 'Account name is required'],
       trim: true,
-      maxlength: 50,
+      minlength: [1, 'Account name is required'],
+      maxlength: [50, 'Account name cannot exceed 50 characters'],
     },
     type: {
       type: String,
@@ -39,10 +41,10 @@ const AccountSchema = new Schema<IAccount>(
     },
     currency: {
       type: String,
-      required: true,
+      required: [true, 'Currency is required'],
       default: 'INR',
       uppercase: true,
-      maxlength: 3,
+      enum: CURRENCY_CODES,
     },
     icon: {
       type: String,
@@ -51,6 +53,7 @@ const AccountSchema = new Schema<IAccount>(
     color: {
       type: String,
       default: '#3B82F6',
+      match: [/^#[0-9A-F]{6}$/i, 'Invalid hex color format'],
     },
     isActive: {
       type: Boolean,

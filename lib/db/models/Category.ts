@@ -20,9 +20,10 @@ const CategorySchema = new Schema<ICategory>(
     },
     name: {
       type: String,
-      required: true,
+      required: [true, 'Category name is required'],
       trim: true,
-      maxlength: 50,
+      minlength: [1, 'Category name is required'],
+      maxlength: [50, 'Category name cannot exceed 50 characters'],
     },
     type: {
       type: String,
@@ -47,11 +48,9 @@ const CategorySchema = new Schema<ICategory>(
   }
 );
 
-// Index for efficient queries
+// Indexes for efficient queries
+CategorySchema.index({ userId: 1, name: 1 }, { unique: true, sparse: true }); // Prevent duplicate names per user
 CategorySchema.index({ userId: 1, type: 1 });
-CategorySchema.index({ isSystem: 1 });
-
-// Compound index for system categories
 CategorySchema.index({ isSystem: 1, type: 1 });
 
 const Category: Model<ICategory> =

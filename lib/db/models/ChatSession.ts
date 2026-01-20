@@ -32,7 +32,8 @@ const MessageSchema = new Schema<IMessage>({
   },
   content: {
     type: String,
-    required: true,
+    required: [true, 'Message content is required'],
+    maxlength: [10000, 'Message content cannot exceed 10,000 characters'],
   },
   timestamp: {
     type: Date,
@@ -66,15 +67,24 @@ const ChatSessionSchema = new Schema<IChatSession>(
       required: true,
       index: true,
     },
-    messages: [MessageSchema],
+    messages: {
+      type: [MessageSchema],
+      validate: {
+        validator: function(v: IMessage[]) {
+          return v.length <= 1000;
+        },
+        message: 'Chat session cannot exceed 1000 messages'
+      }
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Index for efficient queries
+// Indexes for efficient queries
 ChatSessionSchema.index({ userId: 1, createdAt: -1 });
+ChatSessionSchema.index({ userId: 1, updatedAt: -1 }); // For pagination
 
 const ChatSession: Model<IChatSession> =
   mongoose.models.ChatSession ||
