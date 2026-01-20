@@ -202,20 +202,29 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
           </div>
         </SheetHeader>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Chat History Sidebar */}
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Chat History Sidebar - Full width overlay on mobile, sidebar on desktop */}
           {showHistory && (
-            <div className="w-64 border-r">
-              <ChatHistory
-                currentSessionId={sessionId}
-                onSelectSession={handleSelectSession}
-                onNewChat={handleNewChat}
+            <>
+              {/* Backdrop for mobile */}
+              <div
+                className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 md:hidden"
+                onClick={() => setShowHistory(false)}
               />
-            </div>
+              
+              {/* Sidebar */}
+              <div className="absolute inset-y-0 left-0 w-full sm:w-80 md:relative md:w-80 lg:w-96 border-r shrink-0 z-20 bg-background">
+                <ChatHistory
+                  currentSessionId={sessionId}
+                  onSelectSession={handleSelectSession}
+                  onNewChat={handleNewChat}
+                />
+              </div>
+            </>
           )}
 
           {/* Main Chat Area */}
-          <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex flex-col flex-1 min-w-0 relative">
             {/* Messages Area */}
             <div
               ref={scrollRef}

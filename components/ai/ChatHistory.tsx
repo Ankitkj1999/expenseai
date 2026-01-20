@@ -88,9 +88,10 @@ export function ChatHistory({
     const firstUserMessage = session.messages.find(m => m.role === 'user');
     if (!firstUserMessage) return 'New conversation';
     
-    const preview = firstUserMessage.content.slice(0, 50);
-    return preview.length < firstUserMessage.content.length 
-      ? `${preview}...` 
+    // Limit to 35 characters for better display
+    const preview = firstUserMessage.content.slice(0, 35);
+    return preview.length < firstUserMessage.content.length
+      ? `${preview}...`
       : preview;
   };
 
@@ -117,30 +118,30 @@ export function ChatHistory({
     <>
       <div className="flex flex-col h-full border-r bg-muted/30">
         {/* Header */}
-        <div className="p-3 border-b">
+        <div className="p-2 sm:p-3 border-b">
           <Button
             onClick={onNewChat}
-            className="w-full gap-2"
+            className="w-full gap-1.5 sm:gap-2 text-xs sm:text-sm"
             size="sm"
           >
-            <Plus className="h-4 w-4" />
-            New Chat
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">New Chat</span>
           </Button>
         </div>
 
         {/* Sessions List */}
         <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
+          <div className="p-1.5 sm:p-2 space-y-1">
             {isLoading ? (
               <>
                 {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full mb-2" />
+                  <Skeleton key={i} className="h-14 sm:h-16 w-full mb-1.5 sm:mb-2" />
                 ))}
               </>
             ) : sessions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-                <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-3 sm:px-4 text-center">
+                <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mb-2" />
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   No chat history yet
                 </p>
               </div>
@@ -149,34 +150,41 @@ export function ChatHistory({
                 <div
                   key={session._id}
                   className={cn(
-                    'group relative rounded-lg p-3 cursor-pointer transition-colors',
+                    'group relative rounded-lg p-2.5 cursor-pointer transition-colors',
                     'hover:bg-muted',
                     currentSessionId === session._id && 'bg-muted'
                   )}
                   onClick={() => onSelectSession(session._id)}
                 >
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2.5 pr-11 overflow-hidden">
                     <MessageSquare className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
+                    <div className="flex-1 min-w-0 max-w-full">
+                      <p className="text-sm font-medium leading-snug mb-1 overflow-hidden text-ellipsis whitespace-nowrap">
                         {getSessionPreview(session)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
                         {formatDate(session.updatedAt)}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteSessionId(session._id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 shrink-0",
+                      "opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive",
+                      "transition-all duration-200",
+                      "md:opacity-0 md:group-hover:opacity-100",
+                      "max-md:opacity-100"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteSessionId(session._id);
+                    }}
+                    aria-label="Delete conversation"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))
             )}
