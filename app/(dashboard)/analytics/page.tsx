@@ -37,10 +37,10 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       {/* Header with Period Selector */}
-      <div className="flex flex-col gap-4 px-4 lg:px-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold md:text-3xl">Analytics</h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">
             Comprehensive insights into your financial data
           </p>
         </div>
@@ -74,7 +74,7 @@ export default function AnalyticsPage() {
 
       {/* Category Breakdown and Comparison - Side by Side */}
       <div className="px-4 lg:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
           <CategoryBreakdownChart period={period} />
           <ComparisonChart period={period} />
         </div>

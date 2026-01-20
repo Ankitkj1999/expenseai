@@ -52,18 +52,18 @@ export default function AccountsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6 md:py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">Accounts</h1>
-        <p className="text-sm md:text-base text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold md:text-3xl">Accounts</h1>
+        <p className="mt-1 text-sm text-muted-foreground md:text-base">
           Manage your cash, bank accounts, credit cards, and wallets
         </p>
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-40 w-full" />
           ))}
@@ -85,7 +85,7 @@ export default function AccountsPage() {
 
       {/* Accounts Grid */}
       {!isLoading && accounts.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {accounts.map((account) => {
             const Icon = accountIcons[account.type];
             return (
