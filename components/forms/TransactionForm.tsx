@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Field, FieldLabel, FieldDescription, FieldGroup } from '@/components/ui/field';
 import { CategorySelect } from './shared/CategorySelect';
 import { AccountSelect } from './shared/AccountSelect';
@@ -139,37 +139,37 @@ export function TransactionForm({
         {/* Transaction Type */}
         <Field>
           <FieldLabel>Transaction Type</FieldLabel>
-          <ToggleGroup
-            type="single"
+          <Tabs
             value={transactionType}
-            onValueChange={(value) => {
-              if (value) setValue('type', value as TransactionType);
-            }}
-            className="grid grid-cols-3 gap-3"
-            disabled={isLoading}
+            onValueChange={(value) => setValue('type', value as TransactionType)}
           >
-            <ToggleGroupItem
-              value="expense"
-              className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-red-500/10 data-[state=on]:text-red-600 data-[state=on]:border-red-500 border-2"
-            >
-              <TrendingDown className="h-5 w-5" />
-              <span className="text-sm font-medium">Expense</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="income"
-              className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-green-500/10 data-[state=on]:text-green-600 data-[state=on]:border-green-500 border-2"
-            >
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-sm font-medium">Income</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="transfer"
-              className="flex flex-col gap-2 h-auto py-4 px-4 data-[state=on]:bg-blue-500/10 data-[state=on]:text-blue-600 data-[state=on]:border-blue-500 border-2"
-            >
-              <ArrowRightLeft className="h-5 w-5" />
-              <span className="text-sm font-medium">Transfer</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger
+                value="expense"
+                disabled={isLoading}
+                className="data-[state=active]:text-red-600"
+              >
+                <TrendingDown className="h-4 w-4" />
+                Expense
+              </TabsTrigger>
+              <TabsTrigger
+                value="income"
+                disabled={isLoading}
+                className="data-[state=active]:text-green-600"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Income
+              </TabsTrigger>
+              <TabsTrigger
+                value="transfer"
+                disabled={isLoading}
+                className="data-[state=active]:text-blue-600"
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+                Transfer
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           {errors.type && (
             <FieldDescription className="text-destructive">
               {errors.type.message}
@@ -185,9 +185,10 @@ export function TransactionForm({
             type="number"
             step="0.01"
             placeholder="0.00"
-            className="text-3xl font-bold h-16 px-4"
+            className="text-lg font-semibold"
             {...register('amount', { valueAsNumber: true })}
             disabled={isLoading}
+            onWheel={(e) => e.currentTarget.blur()}
           />
           {errors.amount && (
             <FieldDescription className="text-destructive">

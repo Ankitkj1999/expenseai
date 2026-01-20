@@ -42,10 +42,27 @@ export function CategorySelect({
     return <Skeleton className="h-10 w-full" />;
   }
 
+  const selectedCategory = categories.find(cat => cat._id === value);
+  const SelectedIcon = selectedCategory
+    ? CATEGORY_ICONS[selectedCategory.icon as keyof typeof CATEGORY_ICONS]
+    : null;
+
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder}>
+          {selectedCategory && (
+            <div className="flex items-center gap-2">
+              {SelectedIcon && (
+                <SelectedIcon
+                  className="h-4 w-4"
+                  style={{ color: selectedCategory.color }}
+                />
+              )}
+              <span>{selectedCategory.name}</span>
+            </div>
+          )}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {categories.map((category) => {
@@ -54,7 +71,12 @@ export function CategorySelect({
           return (
             <SelectItem key={category._id} value={category._id}>
               <div className="flex items-center gap-2">
-                {IconComponent && <IconComponent className="h-4 w-4" style={{ color: category.color }} />}
+                {IconComponent && (
+                  <IconComponent
+                    className="h-4 w-4"
+                    style={{ color: category.color }}
+                  />
+                )}
                 <span>{category.name}</span>
               </div>
             </SelectItem>
