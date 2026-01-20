@@ -97,7 +97,6 @@ const AIInsightSchema = new Schema<IAIInsight>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
     isStale: {
       type: Boolean,

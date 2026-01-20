@@ -7,7 +7,7 @@ import {
   ComparisonChart,
   SummaryCards,
 } from "@/components/analytics";
-import { AIInsights } from "@/components/dashboard/AIInsights";
+import { AIInsightsHorizontal } from "@/components/dashboard/AIInsightsHorizontal";
 import {
   Select,
   SelectContent,
@@ -52,17 +52,16 @@ export default function AnalyticsPage() {
         <SummaryCards period={period} />
       </div>
 
-      {/* AI Insights and Spending Trend - Side by Side */}
+      {/* AI Insights - Full Width Horizontal */}
       <div className="px-4 lg:px-6">
-        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-          {/* AI Insights */}
-          <AIInsights />
-          
-          {/* Spending Trend Chart */}
-          <SpendingTrendChart
-            defaultPeriod={period === "today" ? "week" : period === "week" ? "week" : period === "month" ? "month" : "year"}
-          />
-        </div>
+        <AIInsightsHorizontal />
+      </div>
+
+      {/* Income vs Expense Trend Chart - Full Width */}
+      <div className="px-4 lg:px-6">
+        <SpendingTrendChart
+          defaultPeriod={period === "today" ? "week" : period === "week" ? "week" : period === "month" ? "month" : "year"}
+        />
       </div>
 
       {/* Category Breakdown and Comparison - Side by Side */}
