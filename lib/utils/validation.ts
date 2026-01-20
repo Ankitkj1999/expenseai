@@ -119,7 +119,7 @@ export const CommonSchemas = {
   /**
    * Account type enum
    */
-  accountType: z.enum(['cash', 'bank', 'credit', 'wallet']),
+  accountType: z.enum(['cash', 'bank', 'credit', 'wallet', 'savings']),
   
   /**
    * Category type enum

@@ -8,7 +8,7 @@ import { Field, FieldLabel, FieldDescription, FieldGroup } from '@/components/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateAccount, useUpdateAccount } from '@/lib/hooks/useAccounts';
 import type { CreateAccountRequest, Account } from '@/lib/api/accounts';
-import { Wallet, Building2, CreditCard, Loader2 } from 'lucide-react';
+import { Wallet, Building2, CreditCard, Loader2, PiggyBank } from 'lucide-react';
 
 interface AccountFormProps {
   mode: 'create' | 'edit';
@@ -21,6 +21,7 @@ const accountTypes = [
   { value: 'bank', label: 'Bank Account', icon: Building2 },
   { value: 'credit', label: 'Credit Card', icon: CreditCard },
   { value: 'wallet', label: 'Digital Wallet', icon: Wallet },
+  { value: 'savings', label: 'Savings', icon: PiggyBank },
 ] as const;
 
 const predefinedColors = [
@@ -120,7 +121,7 @@ export function AccountForm({ mode, initialData, onSuccess }: AccountFormProps) 
           <FieldLabel htmlFor="type">Account Type</FieldLabel>
           <Select
             value={selectedType}
-            onValueChange={(value) => setValue('type', value as 'cash' | 'bank' | 'credit' | 'wallet')}
+            onValueChange={(value) => setValue('type', value as 'cash' | 'bank' | 'credit' | 'wallet' | 'savings')}
             disabled={isLoading}
           >
             <SelectTrigger id="type">

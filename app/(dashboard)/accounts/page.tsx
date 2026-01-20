@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Wallet, CreditCard, Building2, Trash2, Edit, TrendingUp, DollarSign } from 'lucide-react';
+import { AlertCircle, Wallet, CreditCard, Building2, Trash2, Edit, TrendingUp, DollarSign, PiggyBank } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { AccountSheet } from '@/components/forms/AccountSheet';
@@ -17,6 +17,7 @@ const accountIcons = {
   bank: Building2,
   credit: CreditCard,
   wallet: Wallet,
+  savings: PiggyBank,
 };
 
 export default function AccountsPage() {

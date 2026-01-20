@@ -11,7 +11,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api/client';
 import type { AccountResponse } from '@/types';
-import { Wallet, Building2, CreditCard } from 'lucide-react';
+import { Wallet, Building2, CreditCard, PiggyBank } from 'lucide-react';
 
 // Icon mapping for account types
 const ACCOUNT_TYPE_ICONS = {
@@ -19,6 +19,7 @@ const ACCOUNT_TYPE_ICONS = {
   bank: Building2,
   credit: CreditCard,
   wallet: Wallet,
+  savings: PiggyBank,
 } as const;
 
 interface AccountSelectProps {

@@ -3,7 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IAccount extends Document {
   userId: mongoose.Types.ObjectId;
   name: string;
-  type: 'cash' | 'bank' | 'credit' | 'wallet';
+  type: 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
   balance: number;
   currency: string;
   icon: string;
@@ -30,7 +30,7 @@ const AccountSchema = new Schema<IAccount>(
     type: {
       type: String,
       required: true,
-      enum: ['cash', 'bank', 'credit', 'wallet'],
+      enum: ['cash', 'bank', 'credit', 'wallet', 'savings'],
     },
     balance: {
       type: Number,

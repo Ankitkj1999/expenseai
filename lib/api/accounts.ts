@@ -4,7 +4,7 @@ export interface Account {
   _id: string;
   userId: string;
   name: string;
-  type: 'cash' | 'bank' | 'credit' | 'wallet';
+  type: 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
   balance: number;
   currency: string;
   icon: string;
@@ -16,7 +16,7 @@ export interface Account {
 
 export interface CreateAccountRequest {
   name: string;
-  type: 'cash' | 'bank' | 'credit' | 'wallet';
+  type: 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
   balance: number;
   currency?: string;
   icon?: string;
@@ -25,7 +25,7 @@ export interface CreateAccountRequest {
 
 export interface UpdateAccountRequest {
   name?: string;
-  type?: 'cash' | 'bank' | 'credit' | 'wallet';
+  type?: 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
   balance?: number;
   currency?: string;
   icon?: string;

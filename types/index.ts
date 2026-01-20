@@ -51,7 +51,7 @@ export interface AuthenticatedUser {
 export type { IUser };
 
 // Account types
-export type AccountType = 'cash' | 'bank' | 'credit' | 'wallet';
+export type AccountType = 'cash' | 'bank' | 'credit' | 'wallet' | 'savings';
 
 export interface CreateAccountRequest {
   name: string;
