@@ -21,7 +21,7 @@ const accountIcons = {
 };
 
 export default function AccountsPage() {
-  const { data: accounts = [], isLoading, error } = useAccounts();
+  const { data: accountsData, isLoading, error } = useAccounts();
   const deleteAccountMutation = useDeleteAccount();
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
@@ -38,8 +38,9 @@ export default function AccountsPage() {
     }).format(amount);
   };
 
+  const accounts = accountsData?.accounts ?? [];
+  const totalBalance = accountsData?.totalBalance ?? 0;
   const activeAccounts = accounts.filter((a) => a.isActive);
-  const totalBalance = activeAccounts.reduce((sum, a) => sum + a.balance, 0);
 
   if (error) {
     return (

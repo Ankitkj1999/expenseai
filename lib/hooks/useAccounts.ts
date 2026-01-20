@@ -1,15 +1,15 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { accountsApi, type Account, type CreateAccountRequest, type UpdateAccountRequest } from '@/lib/api/accounts';
+import { accountsApi, type Account, type AccountsListResult, type CreateAccountRequest, type UpdateAccountRequest } from '@/lib/api/accounts';
 import { queryKeys } from '@/lib/constants/queryKeys';
 import { toast } from 'sonner';
 
 /**
- * Hook to fetch all accounts
+ * Hook to fetch all accounts with total balance
  */
 export function useAccounts() {
-  return useQuery({
+  return useQuery<AccountsListResult>({
     queryKey: queryKeys.accounts,
     queryFn: accountsApi.list,
   });

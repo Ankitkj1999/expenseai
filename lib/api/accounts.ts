@@ -33,13 +33,15 @@ export interface UpdateAccountRequest {
   isActive?: boolean;
 }
 
+export interface AccountsListResult {
+  accounts: Account[];
+  totalBalance: number;
+  count: number;
+}
+
 interface AccountsResponse {
   success: boolean;
-  data: {
-    accounts: Account[];
-    totalBalance: number;
-    count: number;
-  };
+  data: AccountsListResult;
 }
 
 interface AccountResponse {
@@ -52,11 +54,11 @@ interface AccountResponse {
  */
 export const accountsApi = {
   /**
-   * Get all accounts
+   * Get all accounts with total balance
    */
-  list: async (): Promise<Account[]> => {
+  list: async (): Promise<AccountsListResult> => {
     const response = await api.get<AccountsResponse>('accounts');
-    return response.data.data.accounts;
+    return response.data.data;
   },
 
   /**

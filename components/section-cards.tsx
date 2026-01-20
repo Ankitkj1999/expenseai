@@ -1,8 +1,11 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PiggyBank } from 'lucide-react';
 import { useCurrency } from '@/lib/hooks/useFormatting';
+import { useAccounts } from '@/lib/hooks/useAccounts';
+import { useAnalyticsSummary, useAnalyticsComparison } from '@/lib/hooks/useAnalytics';
 
 interface SummaryCardProps {
   title: string;
@@ -63,12 +66,48 @@ function SummaryCard({ title, amount, change, icon: Icon, type }: SummaryCardPro
 }
 
 export function SectionCards() {
-  // TODO: Replace with real data from API
+  // Fetch data from APIs
+  const { data: accountsData, isLoading: isLoadingAccounts } = useAccounts();
+  const { data: summary, isLoading: isLoadingSummary } = useAnalyticsSummary({ period: 'month' });
+  const { data: comparison, isLoading: isLoadingComparison } = useAnalyticsComparison({
+    currentPeriod: 'month'
+  });
+
+  const isLoading = isLoadingAccounts || isLoadingSummary || isLoadingComparison;
+
+  // Show loading skeletons
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 px-4 lg:px-6 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <Skeleton className="h-12 w-12 rounded-full" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  // Extract data with fallbacks
   const summaryData = {
-    balance: 120000,
-    income: 53000,
-    expense: 12400,
-    savings: 40600,
+    balance: accountsData?.totalBalance ?? 0,
+    income: summary?.totalIncome ?? 0,
+    expense: summary?.totalExpense ?? 0,
+    savings: summary?.netBalance ?? 0,
+  };
+
+  const changes = {
+    balance: comparison?.change.net.percentage ?? 0,
+    income: comparison?.change.income.percentage ?? 0,
+    expense: comparison?.change.expense.percentage ?? 0,
+    savings: comparison?.change.net.percentage ?? 0,
   };
 
   return (
@@ -76,28 +115,28 @@ export function SectionCards() {
       <SummaryCard
         title="Total Balance"
         amount={summaryData.balance}
-        change={{ value: 12.5, period: 'from last month' }}
+        change={{ value: changes.balance, period: 'from last month' }}
         icon={Wallet}
         type="balance"
       />
       <SummaryCard
         title="Income"
         amount={summaryData.income}
-        change={{ value: 8.2, period: 'from last month' }}
+        change={{ value: changes.income, period: 'from last month' }}
         icon={DollarSign}
         type="income"
       />
       <SummaryCard
         title="Expense"
         amount={summaryData.expense}
-        change={{ value: -3.1, period: 'from last month' }}
+        change={{ value: changes.expense, period: 'from last month' }}
         icon={TrendingDown}
         type="expense"
       />
       <SummaryCard
         title="Savings"
         amount={summaryData.savings}
-        change={{ value: 15.3, period: 'from last month' }}
+        change={{ value: changes.savings, period: 'from last month' }}
         icon={PiggyBank}
         type="savings"
       />
