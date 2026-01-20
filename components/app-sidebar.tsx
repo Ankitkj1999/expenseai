@@ -10,7 +10,6 @@ import {
   IconRepeat,
   IconTarget,
   IconSettings,
-  IconHelp,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -68,11 +67,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Settings",
       url: "/settings",
       icon: IconSettings,
-    },
-    {
-      title: "Help",
-      url: "/help",
-      icon: IconHelp,
     },
   ];
 
