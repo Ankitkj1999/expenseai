@@ -9,7 +9,6 @@ import {
   IconChartPie,
   IconRepeat,
   IconTarget,
-  IconMessageCircle,
   IconSettings,
   IconHelp,
 } from "@tabler/icons-react"
@@ -65,11 +64,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ];
 
   const navSecondary = [
-    {
-      title: "AI Chat",
-      url: "/chat",
-      icon: IconMessageCircle,
-    },
     {
       title: "Settings",
       url: "/settings",
