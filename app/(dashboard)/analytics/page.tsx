@@ -14,25 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Period = "today" | "week" | "month" | "year";
 
 export default function AnalyticsPage() {
   const [period, setPeriod] = React.useState<Period>("month");
-
-  const getPeriodLabel = (p: Period) => {
-    switch (p) {
-      case "today":
-        return "Today";
-      case "week":
-        return "Last 7 Days";
-      case "month":
-        return "Last 30 Days";
-      case "year":
-        return "Last Year";
-    }
-  };
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -65,7 +51,7 @@ export default function AnalyticsPage() {
         <SummaryCards period={period} />
       </div>
 
-      {/* Spending Trend Chart - Full Width */}
+      {/* Income vs Expense Trend Chart - Full Width */}
       <div className="px-4 lg:px-6">
         <SpendingTrendChart
           defaultPeriod={period === "today" ? "week" : period === "week" ? "week" : period === "month" ? "month" : "year"}
@@ -78,55 +64,6 @@ export default function AnalyticsPage() {
           <CategoryBreakdownChart period={period} />
           <ComparisonChart period={period} />
         </div>
-      </div>
-
-      {/* Additional Insights Section */}
-      <div className="px-4 lg:px-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Financial Insights</CardTitle>
-            <CardDescription>
-              Key observations for {getPeriodLabel(period).toLowerCase()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <span className="text-sm font-semibold text-primary">1</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Track Your Spending</p>
-                  <p className="text-sm text-muted-foreground">
-                    Review your category breakdown to identify areas where you can reduce expenses.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <span className="text-sm font-semibold text-primary">2</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Monitor Trends</p>
-                  <p className="text-sm text-muted-foreground">
-                    Use the spending trends chart to understand your income and expense patterns over time.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <span className="text-sm font-semibold text-primary">3</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Compare Periods</p>
-                  <p className="text-sm text-muted-foreground">
-                    Check the period comparison to see how your current spending compares to previous periods.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

@@ -16,7 +16,9 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { AlertCircle, PieChartIcon } from "lucide-react";
 import { useCategoryBreakdown } from "@/lib/hooks/useAnalytics";
 
 // Default colors for categories
@@ -73,13 +75,32 @@ export function CategoryBreakdownChart({
     return (
       <Card className="@container/card">
         <CardHeader>
-          <CardTitle>Category Breakdown</CardTitle>
-          <CardDescription>Unable to load category data</CardDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Category Breakdown</CardTitle>
+              <CardDescription>
+                {type === "expense" ? "Expenses" : "Income"} by category
+              </CardDescription>
+            </div>
+            <ToggleGroup
+              type="single"
+              value={type}
+              onValueChange={(value) => value && setType(value as TransactionType)}
+              variant="outline"
+              size="sm"
+            >
+              <ToggleGroupItem value="expense">Expenses</ToggleGroupItem>
+              <ToggleGroupItem value="income">Income</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "An error occurred"}
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error instanceof Error ? error.message : "Unable to load category data"}
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -111,8 +132,16 @@ export function CategoryBreakdownChart({
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : !chartData || chartData.length === 0 ? (
-          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            No {type} data available for the selected period
+          <div className="flex h-[300px] flex-col items-center justify-center gap-2 text-center">
+            <div className="rounded-full bg-muted p-3">
+              <PieChartIcon className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">No {type} data</p>
+              <p className="text-xs text-muted-foreground">
+                Add {type === "expense" ? "expenses" : "income"} to see category breakdown
+              </p>
+            </div>
           </div>
         ) : (
           <ChartContainer

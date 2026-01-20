@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Card,
@@ -29,6 +29,8 @@ import {
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { useAnalyticsTrends } from "@/lib/hooks/useAnalytics";
 
 const chartConfig = {
@@ -90,28 +92,50 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
     }
   };
 
-  const getPeriodLabel = (p: Period) => {
-    switch (p) {
-      case "week":
-        return "Last 7 days";
-      case "month":
-        return "Last 30 days";
-      case "year":
-        return "Last 12 months";
-    }
-  };
+  // Calculate totals and trends
+  const stats = React.useMemo(() => {
+    if (!trends || !Array.isArray(trends) || trends.length === 0) return null;
+
+    const totalIncome = trends.reduce((sum, item) => sum + (item.income || 0), 0);
+    const totalExpense = trends.reduce((sum, item) => sum + (item.expense || 0), 0);
+    const netSavings = totalIncome - totalExpense;
+
+    // Calculate trend (comparing first half vs second half)
+    const midpoint = Math.floor(trends.length / 2);
+    const firstHalf = trends.slice(0, midpoint);
+    const secondHalf = trends.slice(midpoint);
+
+    const firstHalfAvg = firstHalf.length > 0
+      ? firstHalf.reduce((sum, item) => sum + (item.expense || 0), 0) / firstHalf.length
+      : 0;
+    const secondHalfAvg = secondHalf.length > 0
+      ? secondHalf.reduce((sum, item) => sum + (item.expense || 0), 0) / secondHalf.length
+      : 0;
+    const trendPercentage = firstHalfAvg > 0 ? ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100 : 0;
+
+    return {
+      totalIncome,
+      totalExpense,
+      netSavings,
+      trendPercentage,
+      isIncreasing: trendPercentage > 0,
+    };
+  }, [trends]);
 
   if (error) {
     return (
       <Card className="@container/card">
         <CardHeader>
-          <CardTitle>Spending Trends</CardTitle>
-          <CardDescription>Unable to load trend data</CardDescription>
+          <CardTitle>Income vs Expense Over Time</CardTitle>
+          <CardDescription>Track your financial trends</CardDescription>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "An error occurred"}
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error instanceof Error ? error.message : "Unable to load trend data"}
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -120,60 +144,92 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Spending Trends</CardTitle>
-        <CardDescription>
-          <span className="hidden @[540px]/card:block">
-            Income vs Expense over time
-          </span>
-          <span className="@[540px]/card:hidden">Income vs Expense</span>
-        </CardDescription>
-        <CardAction>
-          <ToggleGroup
-            type="single"
-            value={period}
-            onValueChange={(value) => value && setPeriod(value as Period)}
-            variant="outline"
-            className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
-          >
-            <ToggleGroupItem value="year">Last 12 months</ToggleGroupItem>
-            <ToggleGroupItem value="month">Last 30 days</ToggleGroupItem>
-            <ToggleGroupItem value="week">Last 7 days</ToggleGroupItem>
-          </ToggleGroup>
-          <Select value={period} onValueChange={(value) => setPeriod(value as Period)}>
-            <SelectTrigger
-              className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
-              size="sm"
-              aria-label="Select a period"
+        <div className="flex flex-col gap-2 @[540px]/card:flex-row @[540px]/card:items-start @[540px]/card:justify-between">
+          <div className="space-y-1">
+            <CardTitle>Income vs Expense Over Time</CardTitle>
+            <CardDescription>
+              Track your financial trends and patterns
+            </CardDescription>
+            {stats && !isLoading && (
+              <div className="flex items-center gap-4 pt-2 text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Net:</span>
+                  <span className={`font-semibold ${stats.netSavings >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                    ${Math.abs(stats.netSavings).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {stats.isIncreasing ? (
+                    <TrendingUp className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  )}
+                  <span className="text-muted-foreground">
+                    {Math.abs(stats.trendPercentage).toFixed(1)}% {stats.isIncreasing ? "increase" : "decrease"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          <CardAction>
+            <ToggleGroup
+              type="single"
+              value={period}
+              onValueChange={(value) => value && setPeriod(value as Period)}
+              variant="outline"
+              className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
             >
-              <SelectValue placeholder="Last 30 days" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="year" className="rounded-lg">
-                Last 12 months
-              </SelectItem>
-              <SelectItem value="month" className="rounded-lg">
-                Last 30 days
-              </SelectItem>
-              <SelectItem value="week" className="rounded-lg">
-                Last 7 days
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </CardAction>
+              <ToggleGroupItem value="year">Last 12 months</ToggleGroupItem>
+              <ToggleGroupItem value="month">Last 30 days</ToggleGroupItem>
+              <ToggleGroupItem value="week">Last 7 days</ToggleGroupItem>
+            </ToggleGroup>
+            <Select value={period} onValueChange={(value) => setPeriod(value as Period)}>
+              <SelectTrigger
+                className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
+                size="sm"
+                aria-label="Select a period"
+              >
+                <SelectValue placeholder="Last 30 days" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="year" className="rounded-lg">
+                  Last 12 months
+                </SelectItem>
+                <SelectItem value="month" className="rounded-lg">
+                  Last 30 days
+                </SelectItem>
+                <SelectItem value="week" className="rounded-lg">
+                  Last 7 days
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </CardAction>
+        </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {isLoading ? (
-          <Skeleton className="h-[250px] w-full" />
-        ) : !trends || trends.length === 0 ? (
-          <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
-            No data available for the selected period
+          <Skeleton className="h-[300px] w-full" />
+        ) : !trends || !Array.isArray(trends) || trends.length === 0 ? (
+          <div className="flex h-[300px] flex-col items-center justify-center gap-2 text-center">
+            <div className="rounded-full bg-muted p-3">
+              <TrendingUp className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">No data available</p>
+              <p className="text-xs text-muted-foreground">
+                Start adding transactions to see your spending trends
+              </p>
+            </div>
           </div>
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
+            className="aspect-auto h-[300px] w-full"
           >
-            <AreaChart data={trends}>
+            <AreaChart 
+              data={trends}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
                   <stop
@@ -200,7 +256,7 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                   />
                 </linearGradient>
               </defs>
-              <CartesianGrid vertical={false} />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
               <XAxis
                 dataKey="date"
                 tickLine={false}
@@ -208,6 +264,12 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                 tickMargin={8}
                 minTickGap={32}
                 tickFormatter={formatDate}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => `$${value}`}
               />
               <ChartTooltip
                 cursor={false}
@@ -240,6 +302,7 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                 fill="url(#fillIncome)"
                 stroke="var(--color-income)"
                 strokeWidth={2}
+                stackId="1"
               />
               <Area
                 dataKey="expense"
@@ -247,6 +310,7 @@ export function SpendingTrendChart({ defaultPeriod = "month" }: SpendingTrendCha
                 fill="url(#fillExpense)"
                 stroke="var(--color-expense)"
                 strokeWidth={2}
+                stackId="2"
               />
             </AreaChart>
           </ChartContainer>

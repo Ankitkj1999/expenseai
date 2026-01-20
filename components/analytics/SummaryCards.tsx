@@ -4,12 +4,19 @@ import * as React from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, WalletIcon, PiggyBankIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  ArrowUpIcon, 
+  ArrowDownIcon, 
+  TrendingUpIcon, 
+  WalletIcon, 
+  PiggyBankIcon,
+  AlertCircle 
+} from "lucide-react";
 import { useAnalyticsSummary } from "@/lib/hooks/useAnalytics";
 
 type Period = "today" | "week" | "month" | "year";
@@ -23,20 +30,12 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
 
   if (error) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Error</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                Unable to load data
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {error instanceof Error ? error.message : "Unable to load summary data"}
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -47,7 +46,7 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-4 rounded-full" />
             </CardHeader>
             <CardContent>
               <Skeleton className="h-8 w-32 mb-2" />
@@ -60,7 +59,28 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
   }
 
   if (!summary) {
-    return null;
+    return (
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          { title: "Total Income", icon: TrendingUpIcon },
+          { title: "Total Expenses", icon: WalletIcon },
+          { title: "Net Savings", icon: PiggyBankIcon },
+        ].map((item, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+              <item.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$0.00</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                No data available
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   const savings = summary.netBalance;
@@ -74,10 +94,12 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-          <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
+          <div className="rounded-full bg-green-500/10 p-2">
+            <TrendingUpIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             ${summary.totalIncome.toFixed(2)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -90,10 +112,12 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-          <WalletIcon className="h-4 w-4 text-muted-foreground" />
+          <div className="rounded-full bg-red-500/10 p-2">
+            <WalletIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
             ${summary.totalExpense.toFixed(2)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -108,7 +132,9 @@ export function SummaryCards({ period = "month" }: SummaryCardsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Net Savings</CardTitle>
-          <PiggyBankIcon className="h-4 w-4 text-muted-foreground" />
+          <div className={`rounded-full p-2 ${savings >= 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
+            <PiggyBankIcon className={`h-4 w-4 ${savings >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} />
+          </div>
         </CardHeader>
         <CardContent>
           <div className={`text-2xl font-bold ${savings >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>

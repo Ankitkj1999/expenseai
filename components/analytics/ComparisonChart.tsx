@@ -16,7 +16,8 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowUpIcon, ArrowDownIcon, AlertCircle, BarChart3Icon } from "lucide-react";
 import { useAnalyticsComparison } from "@/lib/hooks/useAnalytics";
 
 const chartConfig = {
@@ -82,39 +83,39 @@ export function ComparisonChart({ period = "month" }: ComparisonChartProps) {
     currentPeriod: period,
   });
 
-  const chartData = React.useMemo(() => {
-    if (!comparison) return [];
-
-    return [
-      {
-        metric: "Income",
-        current: comparison.current.totalIncome,
-        previous: comparison.previous.totalIncome,
-      },
-      {
-        metric: "Expense",
-        current: comparison.current.totalExpense,
-        previous: comparison.previous.totalExpense,
-      },
-      {
-        metric: "Net",
-        current: comparison.current.netBalance,
-        previous: comparison.previous.netBalance,
-      },
-    ];
-  }, [comparison]);
+  // Let React Compiler handle memoization automatically
+  const chartData = !comparison ? [] : [
+    {
+      metric: "Income",
+      current: comparison.current.totalIncome,
+      previous: comparison.previous.totalIncome,
+    },
+    {
+      metric: "Expense",
+      current: comparison.current.totalExpense,
+      previous: comparison.previous.totalExpense,
+    },
+    {
+      metric: "Net",
+      current: comparison.current.netBalance,
+      previous: comparison.previous.netBalance,
+    },
+  ];
 
   if (error) {
     return (
       <Card className="@container/card">
         <CardHeader>
           <CardTitle>Period Comparison</CardTitle>
-          <CardDescription>Unable to load comparison data</CardDescription>
+          <CardDescription>{getPeriodLabel(period)}</CardDescription>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "An error occurred"}
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error instanceof Error ? error.message : "Unable to load comparison data"}
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -130,8 +131,16 @@ export function ComparisonChart({ period = "month" }: ComparisonChartProps) {
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : !comparison ? (
-          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            No comparison data available
+          <div className="flex h-[300px] flex-col items-center justify-center gap-2 text-center">
+            <div className="rounded-full bg-muted p-3">
+              <BarChart3Icon className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">No comparison data</p>
+              <p className="text-xs text-muted-foreground">
+                Add transactions to compare periods
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
@@ -140,7 +149,7 @@ export function ComparisonChart({ period = "month" }: ComparisonChartProps) {
               className="h-[250px] w-full"
             >
               <BarChart data={chartData}>
-                <CartesianGrid vertical={false} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
                 <XAxis
                   dataKey="metric"
                   tickLine={false}
