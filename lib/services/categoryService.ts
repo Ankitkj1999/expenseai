@@ -28,18 +28,23 @@ export const categoryService = {
    * @returns List of categories
    */
   async getAll(userId: string, type?: 'expense' | 'income'): Promise<ICategory[]> {
-    const filter: { $or: Array<Record<string, unknown>>; type?: string } = {
-      $or: [
-        { isSystem: true },
-        { userId, isSystem: false },
-      ],
-    };
+    // Optimized: Separate queries are faster than $or with proper indexes
+    const systemFilter: Record<string, unknown> = { isSystem: true };
+    const userFilter: Record<string, unknown> = { userId, isSystem: false };
 
     if (type) {
-      filter.type = type;
+      systemFilter.type = type;
+      userFilter.type = type;
     }
 
-    return Category.find(filter).sort({ isSystem: -1, name: 1 });
+    // Run queries in parallel
+    const [systemCategories, userCategories] = await Promise.all([
+      Category.find(systemFilter).sort({ name: 1 }).lean(),
+      Category.find(userFilter).sort({ name: 1 }).lean(),
+    ]);
+
+    // System categories first, then user categories
+    return [...systemCategories, ...userCategories] as ICategory[];
   },
 
   /**
@@ -137,6 +142,12 @@ export const categoryService = {
    * @returns Number of categories created
    */
   async initializeSystemCategories(): Promise<number> {
+    // Fast check: if ANY system categories exist, skip initialization
+    const systemCategoryCount = await Category.countDocuments({ isSystem: true });
+    if (systemCategoryCount > 0) {
+      return 0; // Already initialized
+    }
+
     const systemCategories = [
       // Expense categories
       { name: 'Food & Dining', type: 'expense', icon: 'restaurant', color: '#EF4444' },
@@ -158,25 +169,15 @@ export const categoryService = {
       { name: 'Other Income', type: 'income', icon: 'attach_money', color: '#6B7280' },
     ];
 
-    let created = 0;
-    for (const cat of systemCategories) {
-      const exists = await Category.findOne({
-        name: cat.name,
-        type: cat.type,
-        isSystem: true,
-      });
+    // Bulk insert all system categories at once (much faster)
+    const categoriesToCreate = systemCategories.map(cat => ({
+      ...cat,
+      isSystem: true,
+      userId: null,
+    }));
 
-      if (!exists) {
-        await Category.create({
-          ...cat,
-          isSystem: true,
-          userId: null,
-        });
-        created++;
-      }
-    }
-
-    return created;
+    await Category.insertMany(categoriesToCreate, { ordered: false });
+    return categoriesToCreate.length;
   },
 };
 

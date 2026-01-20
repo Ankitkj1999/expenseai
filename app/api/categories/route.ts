@@ -9,10 +9,7 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   const validation = validateQueryParams(request, ValidationSchemas.category.query);
   if (!validation.success) return validation.response;
   
-  // Ensure system categories are initialized
-  await categoryService.initializeSystemCategories();
-  
-  // Get all categories for user
+  // Get all categories for user (system categories already exist in DB)
   const categories = await categoryService.getAll(request.userId, validation.data.type);
   
   return ApiResponse.success({ categories, count: categories.length });
