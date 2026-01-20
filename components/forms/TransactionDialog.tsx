@@ -17,6 +17,8 @@ interface TransactionDialogProps {
   mode: 'create' | 'edit';
   initialData?: TransactionResponse;
   onSuccess?: (data: TransactionResponse) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function TransactionDialog({
@@ -24,8 +26,12 @@ export function TransactionDialog({
   mode,
   initialData,
   onSuccess,
+  open: controlledOpen,
+  onOpenChange,
 }: TransactionDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   const handleSuccess = (data: TransactionResponse) => {
     setOpen(false);
