@@ -22,7 +22,10 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   const categoryId = searchParams.get('categoryId');
   
   if (type) filters.type = type;
-  if (isActive !== null) filters.isActive = isActive === 'true';
+  // Fix: Check if parameter exists before converting to boolean
+  if (isActive !== null && isActive !== undefined) {
+    filters.isActive = isActive === 'true';
+  }
   if (accountId) filters.accountId = accountId;
   if (categoryId) filters.categoryId = categoryId;
   

@@ -30,11 +30,10 @@ const UserSchema = new Schema<IUser>(
     email: {
       type: String,
       required: [true, 'Email is required'],
-      unique: true,
+      unique: true, // Ensures uniqueness at database level
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
-      index: true,
     },
     name: {
       type: String,

@@ -133,13 +133,14 @@ export const accountService = {
 
   /**
    * Update account balance
+   * @param userId - User ID (for security verification)
    * @param accountId - Account ID
    * @param amount - Amount to add (negative to subtract)
    * @returns Updated account or null
    */
-  async updateBalance(accountId: string, amount: number): Promise<IAccount | null> {
-    return Account.findByIdAndUpdate(
-      accountId,
+  async updateBalance(userId: string, accountId: string, amount: number): Promise<IAccount | null> {
+    return Account.findOneAndUpdate(
+      { _id: accountId, userId }, // Verify ownership
       { $inc: { balance: amount } },
       { new: true }
     );

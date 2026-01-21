@@ -94,32 +94,51 @@ class AnalyticsService {
 
   /**
    * Get expense/income summary
+   * Uses aggregation pipeline for efficient calculation
    */
   async getSummary(userId: string, params: SummaryParams = {}): Promise<SummaryResult> {
     const { period = 'month', startDate, endDate } = params;
     const dateRange = this.getDateRange(period, startDate, endDate);
 
-    const transactions = await Transaction.find({
-      userId: new mongoose.Types.ObjectId(userId),
-      date: {
-        $gte: dateRange.start,
-        $lte: dateRange.end,
+    // Use aggregation to calculate totals efficiently on database side
+    const summary = await Transaction.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          date: {
+            $gte: dateRange.start,
+            $lte: dateRange.end,
+          },
+        },
       },
+      {
+        $group: {
+          _id: '$type',
+          total: { $sum: '$amount' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Transform aggregation results
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let transactionCount = 0;
+
+    summary.forEach((item) => {
+      transactionCount += item.count;
+      if (item._id === 'income') {
+        totalIncome = item.total;
+      } else if (item._id === 'expense') {
+        totalExpense = item.total;
+      }
     });
-
-    const totalIncome = transactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const totalExpense = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
 
     return {
       totalIncome,
       totalExpense,
       netBalance: totalIncome - totalExpense,
-      transactionCount: transactions.length,
+      transactionCount,
       period: dateRange,
     };
   }
@@ -199,6 +218,7 @@ class AnalyticsService {
 
   /**
    * Get category-wise breakdown
+   * Limited to top 50 categories to prevent unbounded results
    */
   async getCategoryBreakdown(
     userId: string,
@@ -207,9 +227,10 @@ class AnalyticsService {
       period?: 'today' | 'week' | 'month' | 'year' | 'custom';
       startDate?: Date;
       endDate?: Date;
+      limit?: number;
     }
   ): Promise<CategoryBreakdownItem[]> {
-    const { type, period = 'month', startDate, endDate } = params;
+    const { type, period = 'month', startDate, endDate, limit = 50 } = params;
     const dateRange = this.getDateRange(period, startDate, endDate);
 
     const breakdown = await Transaction.aggregate([
@@ -246,6 +267,9 @@ class AnalyticsService {
       },
       {
         $sort: { amount: -1 },
+      },
+      {
+        $limit: limit, // Add pagination limit
       },
     ]);
 
@@ -310,6 +334,7 @@ class AnalyticsService {
 
   /**
    * Get budget status for all active budgets
+   * Uses aggregation to avoid N+1 query problem
    */
   async getBudgetOverview(userId: string): Promise<{
     budgets: Array<{
@@ -321,49 +346,125 @@ class AnalyticsService {
       percentage: number;
       isOverBudget: boolean;
       shouldAlert: boolean;
+      categoryName?: string;
+      categoryIcon?: string;
+      categoryColor?: string;
     }>;
   }> {
-    const budgets = await Budget.find({
-      userId: new mongoose.Types.ObjectId(userId),
-      isActive: true,
-      startDate: { $lte: new Date() },
-      endDate: { $gte: new Date() },
-    }).populate('categoryId', 'name icon color');
-
-    const budgetStatuses = await Promise.all(
-      budgets.map(async (budget) => {
-        const query: Record<string, unknown> = {
+    const now = new Date();
+    
+    // Use aggregation pipeline to join budgets with their spending in a single query
+    const budgetStatuses = await Budget.aggregate([
+      {
+        $match: {
           userId: new mongoose.Types.ObjectId(userId),
-          type: 'expense',
-          date: {
-            $gte: budget.startDate,
-            $lte: budget.endDate,
+          isActive: true,
+          startDate: { $lte: now },
+          endDate: { $gte: now },
+        },
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryId',
+          foreignField: '_id',
+          as: 'category',
+        },
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'transactions',
+          let: {
+            budgetCategoryId: '$categoryId',
+            budgetStartDate: '$startDate',
+            budgetEndDate: '$endDate',
+            budgetUserId: '$userId'
           },
-        };
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$userId', '$$budgetUserId'] },
+                    { $eq: ['$type', 'expense'] },
+                    { $gte: ['$date', '$$budgetStartDate'] },
+                    { $lte: ['$date', '$$budgetEndDate'] },
+                    {
+                      $cond: {
+                        if: { $ne: ['$$budgetCategoryId', null] },
+                        then: { $eq: ['$categoryId', '$$budgetCategoryId'] },
+                        else: true
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$amount' }
+              }
+            }
+          ],
+          as: 'spending',
+        },
+      },
+      {
+        $addFields: {
+          spent: {
+            $ifNull: [{ $arrayElemAt: ['$spending.total', 0] }, 0]
+          },
+        },
+      },
+      {
+        $project: {
+          budgetId: { $toString: '$_id' },
+          name: 1,
+          spent: 1,
+          limit: '$amount',
+          remaining: { $subtract: ['$amount', '$spent'] },
+          percentage: {
+            $round: [
+              { $multiply: [{ $divide: ['$spent', '$amount'] }, 100] },
+              2
+            ]
+          },
+          isOverBudget: { $gt: ['$spent', '$amount'] },
+          shouldAlert: {
+            $gte: [
+              { $multiply: [{ $divide: ['$spent', '$amount'] }, 100] },
+              '$alertThreshold'
+            ]
+          },
+          categoryName: '$category.name',
+          categoryIcon: '$category.icon',
+          categoryColor: '$category.color',
+        },
+      },
+    ]);
 
-        if (budget.categoryId) {
-          query.categoryId = budget.categoryId;
-        }
-
-        const transactions = await Transaction.find(query);
-        const spent = transactions.reduce((sum, t) => sum + t.amount, 0);
-        const remaining = budget.amount - spent;
-        const percentage = (spent / budget.amount) * 100;
-
-        return {
-          budgetId: budget._id.toString(),
-          name: budget.name,
-          spent,
-          limit: budget.amount,
-          remaining,
-          percentage: Math.round(percentage * 100) / 100,
-          isOverBudget: spent > budget.amount,
-          shouldAlert: percentage >= budget.alertThreshold,
-        };
-      })
-    );
-
-    return { budgets: budgetStatuses };
+    return {
+      budgets: budgetStatuses.map(budget => ({
+        budgetId: budget.budgetId,
+        name: budget.name,
+        spent: budget.spent,
+        limit: budget.limit,
+        remaining: budget.remaining,
+        percentage: budget.percentage,
+        isOverBudget: budget.isOverBudget,
+        shouldAlert: budget.shouldAlert,
+        categoryName: budget.categoryName,
+        categoryIcon: budget.categoryIcon,
+        categoryColor: budget.categoryColor,
+      }))
+    };
   }
 }
 

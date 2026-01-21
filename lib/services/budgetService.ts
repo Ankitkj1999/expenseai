@@ -157,23 +157,14 @@ class BudgetService {
 
   /**
    * Get budget status with spending information
+   * Uses aggregation for efficient calculation
    */
   async getBudgetStatus(budgetId: string, userId: string): Promise<BudgetStatus | null> {
     const budget = await this.getBudgetById(budgetId, userId);
     if (!budget) return null;
 
-    // Calculate spent amount within budget period
-    interface TransactionQuery {
-      userId: mongoose.Types.ObjectId;
-      type: string;
-      date: {
-        $gte: Date;
-        $lte: Date;
-      };
-      categoryId?: mongoose.Types.ObjectId;
-    }
-
-    const query: TransactionQuery = {
+    // Calculate spent amount using aggregation
+    const matchQuery: Record<string, unknown> = {
       userId: new mongoose.Types.ObjectId(userId),
       type: 'expense',
       date: {
@@ -184,12 +175,20 @@ class BudgetService {
 
     // If budget is for a specific category, filter by category
     if (budget.categoryId) {
-      query.categoryId = budget.categoryId;
+      matchQuery.categoryId = budget.categoryId;
     }
 
-    const transactions = await Transaction.find(query);
-    const spent = transactions.reduce((sum, t) => sum + t.amount, 0);
+    const result = await Transaction.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: null,
+          spent: { $sum: '$amount' }
+        }
+      }
+    ]);
 
+    const spent = result[0]?.spent || 0;
     const remaining = budget.amount - spent;
     const percentage = (spent / budget.amount) * 100;
     const isOverBudget = spent > budget.amount;
