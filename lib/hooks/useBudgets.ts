@@ -55,20 +55,39 @@ export function useUpdateBudget() {
 }
 
 /**
- * Hook to delete a budget
+ * Hook to delete a budget with optimistic updates
  */
 export function useDeleteBudget() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => budgetsApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.budgets });
+      
+      const previousBudgets = queryClient.getQueryData<Budget[]>(queryKeys.budgets);
+      
+      if (previousBudgets) {
+        queryClient.setQueryData<Budget[]>(
+          queryKeys.budgets,
+          previousBudgets.filter((b) => b._id !== id)
+        );
+      }
+      
+      return { previousBudgets };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
       toast.success('Budget deleted successfully');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context) => {
+      if (context?.previousBudgets) {
+        queryClient.setQueryData(queryKeys.budgets, context.previousBudgets);
+      }
       console.error('Failed to delete budget:', error);
       toast.error('Failed to delete budget');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
     },
   });
 }

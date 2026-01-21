@@ -57,20 +57,39 @@ export function useUpdateAccount() {
 }
 
 /**
- * Hook to delete an account
+ * Hook to delete an account with optimistic updates
  */
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => accountsApi.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.accounts });
+      
+      const previousData = queryClient.getQueryData<AccountsListResult>(queryKeys.accounts);
+      
+      if (previousData) {
+        queryClient.setQueryData<AccountsListResult>(queryKeys.accounts, {
+          ...previousData,
+          accounts: previousData.accounts.filter((acc) => acc._id !== id),
+        });
+      }
+      
+      return { previousData };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
       toast.success('Account deleted successfully');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(queryKeys.accounts, context.previousData);
+      }
       console.error('Failed to delete account:', error);
       toast.error('Failed to delete account');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
     },
   });
 }
