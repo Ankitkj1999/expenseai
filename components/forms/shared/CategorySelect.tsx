@@ -28,7 +28,16 @@ export function CategorySelect({
   placeholder = 'Select category',
   disabled = false,
 }: CategorySelectProps) {
-  const { data: categories = [], isLoading } = useCategories(type);
+  const { data: categoriesData = [], isLoading } = useCategories(type);
+  
+  // Type-safe categories array
+  const categories = categoriesData as Array<{
+    _id: string;
+    name: string;
+    icon: string;
+    color: string;
+    type: CategoryType;
+  }>;
 
   // Helper function to get icon component from icon name
   const getIconComponent = (iconName: string) => {
@@ -41,8 +50,8 @@ export function CategorySelect({
     return Icons[pascalCase] || Icons.Circle;
   };
 
-  const selectedCategory = useMemo(() => 
-    categories.find(cat => cat._id === value), 
+  const selectedCategory = useMemo(() =>
+    categories.find(cat => cat._id === value),
     [categories, value]
   );
 

@@ -16,6 +16,25 @@ ExpenseAI eliminates the friction of traditional expense tracking by allowing us
 - **Recurring Transactions** - Automate regular expenses and income
 - **Custom Categories** - Create personalized expense categories
 
+## AI Tools & Capabilities
+
+The AI assistant uses specialized tools to interact with your financial data:
+
+- **`getTransactions`** - Retrieve transaction history with filters (type, category, date range, account)
+- **`createTransaction`** - Log new expenses, income, or transfers through natural language
+- **`getSpendingSummary`** - Get income, expenses, and net balance for any period
+- **`getCategoryBreakdown`** - Analyze spending or income by category with percentages
+- **`getBudgetStatus`** - Check budget usage, remaining amounts, and alerts
+- **`getAccounts`** - List all accounts with balances and details
+- **`getCategories`** - View available expense and income categories
+
+**Example Queries:**
+- "Show my budget status"
+- "What did I spend this month?"
+- "I spent $50 on lunch"
+- "Show me my grocery expenses for last week"
+- "How much money do I have in my savings account?"
+
 ## Upcoming Features
 
 - **Notifications** - Real-time alerts for budget limits, recurring transactions, and spending insights

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { authApi } from '@/lib/api/auth';
+import { useAuth } from './AuthContext';
 import type { IUser } from '@/types';
 
 interface UserPreferences {
@@ -40,45 +41,30 @@ const defaultPreferences: UserPreferences = {
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined);
 
 export function UserPreferencesProvider({ children }: { children: React.ReactNode }) {
-  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoading } = useAuth();
 
-  const loadPreferences = async () => {
-    try {
-      const user = await authApi.me();
-      if (user?.preferences) {
-        setPreferences({
-          currency: user.preferences.currency || defaultPreferences.currency,
-          dateFormat: user.preferences.dateFormat || defaultPreferences.dateFormat,
-          theme: user.preferences.theme || defaultPreferences.theme,
-          notifications: {
-            ...defaultPreferences.notifications,
-            ...user.preferences.notifications,
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load user preferences:', error);
-    } finally {
-      setIsLoading(false);
+  // Derive preferences from user data - no need for separate state
+  const preferences = useMemo<UserPreferences>(() => {
+    if (!user?.preferences) {
+      return defaultPreferences;
     }
-  };
 
-  useEffect(() => {
-    loadPreferences();
-  }, []);
+    return {
+      currency: user.preferences.currency || defaultPreferences.currency,
+      dateFormat: user.preferences.dateFormat || defaultPreferences.dateFormat,
+      theme: user.preferences.theme || defaultPreferences.theme,
+      notifications: {
+        ...defaultPreferences.notifications,
+        ...user.preferences.notifications,
+      },
+    };
+  }, [user]);
 
   const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
     try {
       await authApi.updatePreferences(newPreferences);
-      setPreferences((prev) => ({
-        ...prev,
-        ...newPreferences,
-        notifications: {
-          ...prev.notifications,
-          ...(newPreferences.notifications || {}),
-        },
-      }));
+      // Preferences will automatically update when AuthContext refetches user
+      // Could trigger a refetch here if needed, but API should return updated user
     } catch (error) {
       console.error('Failed to update preferences:', error);
       throw error;
@@ -86,8 +72,8 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
   };
 
   const refreshPreferences = async () => {
-    setIsLoading(true);
-    await loadPreferences();
+    // Preferences automatically sync with user data from AuthContext
+    // No separate API call needed
   };
 
   return (

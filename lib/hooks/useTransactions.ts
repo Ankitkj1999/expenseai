@@ -56,20 +56,46 @@ export function useUpdateTransaction() {
 }
 
 /**
- * Hook to delete a transaction
+ * Hook to delete a transaction with optimistic updates
  */
 export function useDeleteTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => transactionsApi.delete(id),
+    // Optimistically remove transaction from UI before server confirms
+    onMutate: async (id) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions() });
+      
+      // Snapshot the previous value
+      const previousTransactions = queryClient.getQueryData<TransactionResponse[]>(queryKeys.transactions());
+      
+      // Optimistically update to the new value
+      if (previousTransactions) {
+        queryClient.setQueryData<TransactionResponse[]>(
+          queryKeys.transactions(),
+          previousTransactions.filter((t) => t._id !== id)
+        );
+      }
+      
+      // Return context with the snapshot
+      return { previousTransactions };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       toast.success('Transaction deleted successfully');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context) => {
+      // Rollback to previous value on error
+      if (context?.previousTransactions) {
+        queryClient.setQueryData(queryKeys.transactions(), context.previousTransactions);
+      }
       console.error('Failed to delete transaction:', error);
       toast.error('Failed to delete transaction');
+    },
+    // Always refetch after error or success to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
     },
   });
 }

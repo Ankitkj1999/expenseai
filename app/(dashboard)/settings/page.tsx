@@ -73,6 +73,9 @@ export default function SettingsPage() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryResponse | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'expense' | 'income'>('all');
 
+  // Type-safe categories array
+  const typedCategories = categories as CategoryResponse[];
+
   // Load user data on mount
   useEffect(() => {
     async function loadUserData() {
@@ -194,7 +197,7 @@ export default function SettingsPage() {
   const selectedDateFormat = getDateFormatByValue(dateFormat);
 
   // Filter categories
-  const filteredCategories = categories.filter((cat) => {
+  const filteredCategories = typedCategories.filter((cat) => {
     if (categoryFilter === 'all') return true;
     return cat.type === categoryFilter;
   });

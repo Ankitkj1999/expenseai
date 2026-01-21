@@ -11,7 +11,7 @@ import type { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, Ca
  */
 export function useCategories(type?: CategoryType) {
   return useQuery({
-    queryKey: type ? [...queryKeys.categories, type] : queryKeys.categories,
+    queryKey: queryKeys.categories(type),
     queryFn: async () => {
       const categories = await categoriesApi.list();
       return type ? categories.filter(cat => cat.type === type) : categories;
@@ -31,7 +31,7 @@ export function useCreateCategory() {
     mutationFn: (data: CreateCategoryRequest) => categoriesApi.create(data),
     onSuccess: () => {
       // Invalidate all category queries to trigger refetch
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
     },
   });
 }
@@ -47,7 +47,7 @@ export function useUpdateCategory() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCategoryRequest }) =>
       categoriesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
     },
   });
 }
@@ -62,7 +62,7 @@ export function useDeleteCategory() {
   return useMutation({
     mutationFn: (id: string) => categoriesApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.categories });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
     },
   });
 }

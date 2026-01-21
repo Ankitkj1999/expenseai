@@ -27,8 +27,11 @@ interface SummaryCardsProps {
 }
 
 export function SummaryCards({ period = "month" }: SummaryCardsProps) {
-  const { formatCurrency } = useCurrency();
-  const { data: summary, isLoading, error } = useAnalyticsSummary({ period });
+  const { formatCurrency, isLoading: preferencesLoading } = useCurrency();
+  const { data: summary, isLoading: dataLoading, error } = useAnalyticsSummary({ period });
+
+  // Show loading state if either preferences or data are loading
+  const isLoading = preferencesLoading || dataLoading;
 
   if (error) {
     return (

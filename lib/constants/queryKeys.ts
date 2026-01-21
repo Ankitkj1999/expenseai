@@ -1,9 +1,34 @@
 // Query keys for TanStack Query
 // Centralized to ensure consistency across the app
 
+import type { TransactionType, CategoryType } from '@/types';
+
+/**
+ * Type-safe filters for transaction queries
+ */
+export interface TransactionFilters {
+  accountId?: string;
+  categoryId?: string;
+  type?: TransactionType;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+/**
+ * Type-safe period values for analytics
+ */
+export type AnalyticsPeriod = 'today' | 'week' | 'month' | 'year' | 'custom';
+
+/**
+ * Type-safe group by values for analytics
+ */
+export type AnalyticsGroupBy = 'day' | 'week' | 'month' | 'category';
+
 export const queryKeys = {
   // Transactions
-  transactions: (filters?: Record<string, any>) => 
+  transactions: (filters?: TransactionFilters) =>
     filters ? ['transactions', filters] as const : ['transactions'] as const,
   transaction: (id: string) => ['transaction', id] as const,
 
@@ -12,7 +37,8 @@ export const queryKeys = {
   account: (id: string) => ['account', id] as const,
 
   // Categories
-  categories: ['categories'] as const,
+  categories: (type?: CategoryType) =>
+    type ? ['categories', type] as const : ['categories'] as const,
   category: (id: string) => ['category', id] as const,
 
   // Budgets
@@ -30,13 +56,13 @@ export const queryKeys = {
 
   // Analytics
   analytics: {
-    summary: (period?: string) => 
+    summary: (period?: AnalyticsPeriod) =>
       period ? ['analytics', 'summary', period] as const : ['analytics', 'summary'] as const,
-    trends: (period?: string, groupBy?: string) => 
+    trends: (period?: AnalyticsPeriod, groupBy?: AnalyticsGroupBy) =>
       ['analytics', 'trends', period, groupBy] as const,
-    categoryBreakdown: (type?: string) => 
+    categoryBreakdown: (type?: CategoryType) =>
       ['analytics', 'category-breakdown', type] as const,
-    comparison: (currentPeriod?: string) => 
+    comparison: (currentPeriod?: AnalyticsPeriod) =>
       ['analytics', 'comparison', currentPeriod] as const,
   },
 }
