@@ -16,6 +16,13 @@ ExpenseAI eliminates the friction of traditional expense tracking by allowing us
 - **Recurring Transactions** - Automate regular expenses and income
 - **Custom Categories** - Create personalized expense categories
 
+## Upcoming Features
+
+- **Notifications** - Real-time alerts for budget limits, recurring transactions, and spending insights
+- **Recurring Transaction Improvements** - Enhanced automation with cron scheduling (addressing current cron issues)
+- **Enhanced AI Chat** - Expanded AI capabilities with tools for creating categories, recurring transactions, and more through natural conversation
+- **Generative AI Features** - Advanced AI-powered financial insights and personalized recommendations
+
 ## Technology Stack
 
 - **Framework**: Next.js 16 (App Router)
