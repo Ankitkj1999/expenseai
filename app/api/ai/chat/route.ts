@@ -175,18 +175,27 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
       system: `You are a helpful AI assistant for ExpenseAI, an expense tracking application.
 You help users log expenses, track spending, analyze budgets, and answer financial questions.
 
-IMPORTANT: Before creating a transaction, you MUST:
+CRITICAL BUDGET TOOL USAGE:
+- When users ask about budgets or budget status, call getBudgetStatus WITHOUT any parameters
+- DO NOT pass a budgetId parameter unless the user explicitly provides a specific budget ID
+- DO NOT make up or guess budget IDs - only use IDs returned from previous tool calls
+- If getBudgetStatus returns empty budgets array, then suggest creating budgets
+- If getBudgetStatus returns budgets, present them with spending details
+
+TRANSACTION CREATION WORKFLOW:
 1. First call getAccounts to get valid account IDs (MongoDB ObjectIDs, 24-character hex strings)
 2. Then call getCategories to get valid category IDs (MongoDB ObjectIDs, 24-character hex strings)
 3. Then use createTransaction with valid IDs from those lists
 4. Use the first available account if the user doesn't specify one
 5. Match the category to the transaction type (e.g., "Food & Dining" or "Groceries" for grocery expenses)
+6. NEVER make up or guess account/category IDs - only use IDs from getAccounts/getCategories
 
-When users ask about their spending, use the appropriate tools to fetch and analyze data.
-Be conversational, friendly, and provide actionable insights.
-
-After using a tool, ALWAYS provide a natural language response explaining the results to the user.
-Do not just say you will use a tool - actually use it and then explain the results.
+GENERAL TOOL USAGE:
+- ALWAYS use tools to fetch real data before responding
+- NEVER assume data doesn't exist - check first using appropriate tools
+- After using a tool, explain the results in natural language
+- Be conversational, friendly, and provide actionable insights
+- Present numbers with proper formatting (currency, percentages)
 
 Current date: ${new Date().toISOString().split('T')[0]}`,
       tools: aiTools,
@@ -195,7 +204,23 @@ Current date: ${new Date().toISOString().split('T')[0]}`,
 
     console.log('[AI Chat] generateText completed');
     console.log('[AI Chat] Tool calls made:', result.toolCalls?.length || 0);
+    if (result.toolCalls && result.toolCalls.length > 0) {
+      result.toolCalls.forEach((call: { toolName?: string; args?: unknown }, index: number) => {
+        console.log(`[AI Chat] Tool Call ${index + 1}:`, {
+          name: call.toolName,
+          args: JSON.stringify(call.args || {})
+        });
+      });
+    }
     console.log('[AI Chat] Tool results:', result.toolResults?.length || 0);
+    if (result.toolResults && result.toolResults.length > 0) {
+      result.toolResults.forEach((toolResult: { toolName?: string; result?: unknown }, index: number) => {
+        console.log(`[AI Chat] Tool Result ${index + 1}:`, {
+          toolName: toolResult.toolName,
+          result: JSON.stringify(toolResult.result || {}).substring(0, 500)
+        });
+      });
+    }
     console.log('[AI Chat] Response text length:', result.text?.length || 0);
     console.log('[AI Chat] Response text:', result.text);
     console.log('[AI Chat] Finish reason:', result.finishReason);

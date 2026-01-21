@@ -206,7 +206,7 @@ export const tools = {
    */
   getBudgetStatus: {
     description:
-      'Get budget status showing spending vs limits, remaining budget, and alerts. Use this to check if user is over budget or how much budget remains.',
+      'Get status of all active budgets showing spending vs limits, remaining budget, percentage used, and alerts. IMPORTANT: Do NOT pass a budgetId parameter unless the user specifically mentions a budget ID - call without parameters to get all budgets. Returns an array of budget statuses with spending information.',
     parameters: getBudgetStatusSchema,
     execute: async (params: z.infer<typeof getBudgetStatusSchema>, userId: string) => {
       console.log('[AI Tool] getBudgetStatus called with params:', JSON.stringify(params, null, 2));
@@ -214,20 +214,90 @@ export const tools = {
       
       if (params.budgetId) {
         // Get specific budget status
+        console.log('[AI Tool] Fetching specific budget:', params.budgetId);
         const status = await budgetService.getBudgetStatus(params.budgetId, userId);
         console.log('[AI Tool] getBudgetStatus result for specific budget:', status);
+        
+        if (!status) {
+          return {
+            success: false,
+            error: 'Budget not found with the provided ID',
+            message: 'The specified budget does not exist or you do not have access to it.',
+          };
+        }
+        
+        // Serialize to plain object
+        const serializedStatus = {
+          budget: {
+            id: status.budget._id.toString(),
+            name: status.budget.name,
+            amount: status.budget.amount,
+            period: status.budget.period,
+            startDate: status.budget.startDate.toISOString(),
+            endDate: status.budget.endDate.toISOString(),
+            alertThreshold: status.budget.alertThreshold,
+            categoryId: status.budget.categoryId ? status.budget.categoryId.toString() : null,
+          },
+          spent: status.spent,
+          remaining: status.remaining,
+          percentage: status.percentage,
+          isOverBudget: status.isOverBudget,
+          shouldAlert: status.shouldAlert,
+        };
+        
         return {
           success: true,
-          status,
+          status: serializedStatus,
+          message: `Budget "${status.budget.name}" found`,
         };
       } else {
         // Get all active budgets status
+        console.log('[AI Tool] Fetching all active budgets for user');
         const statuses = await budgetService.getAllBudgetStatuses(userId);
         console.log('[AI Tool] getBudgetStatus result - count:', statuses.length);
+        
+        // Serialize budget statuses to plain objects (avoid DataCloneError)
+        const serializedStatuses = statuses.map(s => ({
+          budget: {
+            id: s.budget._id.toString(),
+            name: s.budget.name,
+            amount: s.budget.amount,
+            period: s.budget.period,
+            startDate: s.budget.startDate.toISOString(),
+            endDate: s.budget.endDate.toISOString(),
+            alertThreshold: s.budget.alertThreshold,
+            categoryId: s.budget.categoryId ? s.budget.categoryId.toString() : null,
+            categoryName: s.budget.categoryId && typeof s.budget.categoryId === 'object' && 'name' in s.budget.categoryId ? (s.budget.categoryId as { name: string }).name : null,
+          },
+          spent: s.spent,
+          remaining: s.remaining,
+          percentage: s.percentage,
+          isOverBudget: s.isOverBudget,
+          shouldAlert: s.shouldAlert,
+        }));
+        
+        console.log('[AI Tool] Budget details:', JSON.stringify(serializedStatuses.map(s => ({
+          name: s.budget.name,
+          amount: s.budget.amount,
+          spent: s.spent,
+          remaining: s.remaining,
+          percentage: s.percentage
+        })), null, 2));
+        
+        if (serializedStatuses.length === 0) {
+          return {
+            success: true,
+            budgets: [],
+            count: 0,
+            message: 'No active budgets found. User needs to create budgets first.',
+          };
+        }
+        
         return {
           success: true,
-          budgets: statuses,
-          count: statuses.length,
+          budgets: serializedStatuses,
+          count: serializedStatuses.length,
+          message: `Found ${serializedStatuses.length} active budget(s)`,
         };
       }
     },
