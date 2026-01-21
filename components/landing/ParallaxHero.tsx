@@ -12,12 +12,12 @@ export function ParallaxHero() {
   });
 
   // Very fast parallax for phone - moves out quickly in 2-3 scrolls
-  const phoneY = useTransform(scrollYProgress, [0, 0.4], [0, -1200]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -150]);
-  const textScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9]);
+  const phoneY = useTransform(scrollYProgress, [0, 0.5], [0, -1200]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const textScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.92]);
 
   return (
-    <div ref={containerRef} className="relative min-h-[120vh] bg-black">
+    <div ref={containerRef} className="relative min-h-[100vh] md:min-h-[110vh] bg-black">
       {/* Hero Content */}
       <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
         {/* Background Text Layer - Behind Phone */}
