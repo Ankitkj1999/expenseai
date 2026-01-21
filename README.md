@@ -53,10 +53,28 @@ ExpenseAI eliminates the friction of traditional expense tracking by allowing us
 
 ## Project Structure
 
-- `/app` - Next.js app router pages and API routes
-- `/components` - Reusable React components
-- `/lib` - Utility functions and configurations
-- `/models` - MongoDB schemas
+```
+expenseai/
+├── app/              # Next.js App Router
+│   ├── (auth)/       # Authentication pages
+│   ├── (dashboard)/  # Protected dashboard pages
+│   └── api/          # API route handlers
+├── components/       # React components
+│   ├── ui/           # Reusable UI primitives
+│   ├── forms/        # Form components
+│   ├── analytics/    # Charts and visualizations
+│   ├── dashboard/    # Dashboard components
+│   └── ...           # Feature-specific components
+├── lib/              # Core business logic
+│   ├── db/           # Database models and connection
+│   ├── services/     # Business logic layer
+│   ├── api/          # Frontend API clients
+│   ├── hooks/        # Custom React hooks
+│   └── utils/        # Utility functions
+└── docs/             # Documentation
+```
+
+For detailed folder structure documentation, see [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 
 ## License
 
