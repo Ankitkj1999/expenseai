@@ -19,7 +19,7 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ title, amount, change, icon: Icon, type }: SummaryCardProps) {
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, isLoading: preferencesLoading } = useCurrency();
   const isPositive = change && change.value > 0;
   const colorClass = {
     balance: 'text-primary',
@@ -67,13 +67,15 @@ function SummaryCard({ title, amount, change, icon: Icon, type }: SummaryCardPro
 
 export function SectionCards() {
   // Fetch data from APIs
+  const { isLoading: preferencesLoading } = useCurrency();
   const { data: accountsData, isLoading: isLoadingAccounts } = useAccounts();
   const { data: summary, isLoading: isLoadingSummary } = useAnalyticsSummary({ period: 'month' });
   const { data: comparison, isLoading: isLoadingComparison } = useAnalyticsComparison({
     currentPeriod: 'month'
   });
 
-  const isLoading = isLoadingAccounts || isLoadingSummary || isLoadingComparison;
+  // Wait for preferences to load before showing data
+  const isLoading = preferencesLoading || isLoadingAccounts || isLoadingSummary || isLoadingComparison;
 
   // Show loading skeletons
   if (isLoading) {

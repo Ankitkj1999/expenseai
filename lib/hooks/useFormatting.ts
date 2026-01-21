@@ -6,11 +6,13 @@ import { formatDate as formatDateUtil } from '@/lib/constants/dateFormats';
 
 /**
  * Hook to format currency based on user preferences
+ * Waits for preferences to load before formatting
  */
 export function useCurrency() {
-  const { preferences } = useUserPreferences();
+  const { preferences, isLoading } = useUserPreferences();
 
   const formatCurrency = (amount: number, currencyOverride?: string): string => {
+    // Use override if provided, otherwise use loaded preferences
     const currency = currencyOverride || preferences.currency;
     return formatCurrencyUtil(amount, currency);
   };
@@ -24,14 +26,16 @@ export function useCurrency() {
     formatCurrency,
     getSymbol,
     currency: preferences.currency,
+    isLoading, // Expose loading state so components can wait
   };
 }
 
 /**
  * Hook to format dates based on user preferences
+ * Waits for preferences to load before formatting
  */
 export function useDate() {
-  const { preferences } = useUserPreferences();
+  const { preferences, isLoading } = useUserPreferences();
 
   const formatDate = (date: Date | string, formatOverride?: string): string => {
     const format = formatOverride || preferences.dateFormat;
@@ -41,6 +45,7 @@ export function useDate() {
   return {
     formatDate,
     dateFormat: preferences.dateFormat,
+    isLoading, // Expose loading state so components can wait
   };
 }
 
