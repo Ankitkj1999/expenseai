@@ -12,7 +12,11 @@ import * as insightService from '@/lib/services/insightService';
  * Authentication: Requires CRON_SECRET in Authorization header
  * Schedule: Every Sunday at 8 PM UTC (0 20 * * 0)
  */
-export const POST = withCronAuth(async (request: NextRequest) => {
+/**
+ * GET handler for Vercel Cron
+ * Vercel Cron uses GET requests by default
+ */
+export const GET = withCronAuth(async (request: NextRequest) => {
   const startTime = Date.now();
   
   console.log('Starting AI insights processing for all users', {

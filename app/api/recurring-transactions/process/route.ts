@@ -12,7 +12,11 @@ import * as recurringTransactionService from '@/lib/services/recurringTransactio
  * Authentication: Requires CRON_SECRET in Authorization header
  * Schedule: Every hour (0 * * * *)
  */
-export const POST = withCronAuth(async (request: NextRequest) => {
+/**
+ * GET handler for Vercel Cron
+ * Vercel Cron uses GET requests by default
+ */
+export const GET = withCronAuth(async (request: NextRequest) => {
   const startTime = Date.now();
   
   console.log('Starting recurring transactions processing', {
