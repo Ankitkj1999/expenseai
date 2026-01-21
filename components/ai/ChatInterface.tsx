@@ -41,10 +41,13 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive with smooth behavior
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages]);
 
@@ -178,7 +181,7 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
       >
         <SheetHeader className="px-4 pt-4 pb-3 border-b sm:px-6 sm:pt-6 sm:pb-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shrink-0 shadow-sm">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             <div className="min-w-0 flex-1">
@@ -208,12 +211,19 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
             <>
               {/* Backdrop for mobile */}
               <div
-                className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 md:hidden"
+                className={cn(
+                  "absolute inset-0 bg-background/80 backdrop-blur-sm z-10 md:hidden",
+                  "animate-in fade-in-0 duration-200"
+                )}
                 onClick={() => setShowHistory(false)}
               />
               
               {/* Sidebar */}
-              <div className="absolute inset-y-0 left-0 w-full sm:w-80 md:relative md:w-80 lg:w-96 border-r shrink-0 z-20 bg-background">
+              <div className={cn(
+                "absolute inset-y-0 left-0 w-full sm:w-80 md:relative md:w-80 lg:w-96",
+                "border-r shrink-0 z-20 bg-background",
+                "animate-in slide-in-from-left-full md:slide-in-from-left-0 duration-300"
+              )}>
                 <ChatHistory
                   currentSessionId={sessionId}
                   onSelectSession={handleSelectSession}
@@ -242,21 +252,33 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                   <div className="flex flex-wrap gap-2 justify-center max-w-md">
                     <Badge
                       variant="outline"
-                      className="cursor-pointer hover:bg-muted"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
                       onClick={() => handleSend("What did I spend this month?")}
                     >
                       Monthly spending
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="cursor-pointer hover:bg-muted"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
                       onClick={() => handleSend("Show my budget status")}
                     >
                       Budget status
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="cursor-pointer hover:bg-muted"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
                       onClick={() => handleSend("I spent $50 on lunch")}
                     >
                       Log expense
@@ -280,11 +302,18 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                     />
                   ))}
                   {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                    <div className="flex gap-3 mb-4">
+                    <div className="flex gap-3 mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
                         <Loader2 className="h-4 w-4 text-primary-foreground animate-spin" />
                       </div>
-                      <div className="text-sm text-muted-foreground">Thinking...</div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <span>Thinking</span>
+                        <span className="flex gap-0.5">
+                          <span className="animate-bounce [animation-delay:-0.3s]">.</span>
+                          <span className="animate-bounce [animation-delay:-0.15s]">.</span>
+                          <span className="animate-bounce">.</span>
+                        </span>
+                      </div>
                     </div>
                   )}
                 </>

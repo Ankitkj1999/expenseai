@@ -54,10 +54,10 @@ export function ChatMessage({
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
       {/* Tool Call Indicators */}
       {!isUser && toolCalls && toolCalls.length > 0 && (
-        <div className="flex gap-2 mb-2 ml-11">
+        <div className="flex flex-wrap gap-2 mb-2 ml-11">
           {toolCalls.map((tool, index) => {
             const Icon = toolIcons[tool.name] || Database;
             return (
@@ -67,14 +67,17 @@ export function ChatMessage({
                     <Badge
                       variant={tool.status === 'error' ? 'destructive' : 'secondary'}
                       className={cn(
-                        'gap-1.5 text-xs',
-                        tool.status === 'pending' && 'animate-pulse'
+                        'gap-1.5 text-xs transition-all duration-200',
+                        'animate-in fade-in-0 slide-in-from-left-2',
+                        tool.status === 'pending' && 'animate-pulse',
+                        tool.status === 'completed' && 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
                       )}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <Icon className="h-3 w-3" />
                       {tool.name.replace(/([A-Z])/g, ' $1').trim()}
                       {tool.status === 'completed' && (
-                        <Check className="h-3 w-3 text-green-600" />
+                        <Check className="h-3 w-3" />
                       )}
                     </Badge>
                   </TooltipTrigger>
@@ -95,7 +98,7 @@ export function ChatMessage({
       {/* Message */}
       <div
         className={cn(
-          'flex gap-2 sm:gap-3',
+          'group flex gap-2 sm:gap-3',
           isUser ? 'justify-end' : 'justify-start'
         )}
       >
@@ -111,9 +114,10 @@ export function ChatMessage({
           <Card
             className={cn(
               'max-w-[85%] sm:max-w-[80%] px-3 py-2 sm:px-4 sm:py-3',
+              'border-0 shadow-sm transition-shadow duration-200',
               isUser
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted'
+                ? 'bg-primary text-primary-foreground shadow-primary/20'
+                : 'bg-muted hover:shadow-md'
             )}
           >
             <div className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
@@ -126,14 +130,19 @@ export function ChatMessage({
 
           {/* Message Actions */}
           {!isStreaming && (
-            <div className="flex gap-1">
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className={cn(
+                        "h-6 w-6",
+                        "transition-all duration-200",
+                        "hover:bg-muted hover:scale-110",
+                        "active:scale-95"
+                      )}
                       onClick={handleCopy}
                     >
                       {copied ? (
@@ -156,7 +165,12 @@ export function ChatMessage({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className={cn(
+                          "h-6 w-6",
+                          "transition-all duration-200",
+                          "hover:bg-muted hover:scale-110",
+                          "active:scale-95"
+                        )}
                         onClick={onRegenerate}
                       >
                         <RefreshCw className="h-3 w-3" />

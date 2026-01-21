@@ -150,9 +150,11 @@ export function ChatHistory({
                 <div
                   key={session._id}
                   className={cn(
-                    'group relative rounded-lg p-2.5 cursor-pointer transition-colors',
-                    'hover:bg-muted',
-                    currentSessionId === session._id && 'bg-muted'
+                    'group relative rounded-lg p-2.5 cursor-pointer',
+                    'transition-all duration-200',
+                    'hover:bg-muted hover:shadow-sm hover:scale-[1.02]',
+                    'active:scale-[0.98]',
+                    currentSessionId === session._id && 'bg-muted ring-2 ring-primary/20'
                   )}
                   onClick={() => onSelectSession(session._id)}
                 >
