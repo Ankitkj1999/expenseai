@@ -1,103 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ExpenseAI
+
+An AI-powered expense tracking application that simplifies financial management through natural language interactions. Track expenses, manage budgets, and gain insights into your spending patterns with the help of AI.
+
+## Overview
+
+ExpenseAI eliminates the friction of traditional expense tracking by allowing users to log transactions through conversational AI. Instead of filling out forms, simply chat with the AI to record expenses, create budgets, and analyze your financial data.
+
+## Key Features
+
+- **AI-Powered Chat Interface** - Log expenses and income through natural conversation
+- **Smart Transaction Management** - Automatic categorization and insights
+- **Budget Tracking** - Set and monitor budgets with AI-driven recommendations
+- **Analytics Dashboard** - Visualize spending patterns and trends
+- **Multi-Account Support** - Manage multiple bank accounts and cash sources
+- **Recurring Transactions** - Automate regular expenses and income
+- **Custom Categories** - Create personalized expense categories
+
+## Technology Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Database**: MongoDB with Mongoose
+- **AI**: Vercel AI SDK with Amazon Bedrock
+- **UI Components**: Radix UI + shadcn/ui
+- **Styling**: Tailwind CSS 4
+- **State Management**: TanStack Query (React Query)
+- **Forms**: React Hook Form + Zod validation
+- **Charts**: Recharts
+- **Authentication**: JWT with bcryptjs
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+3. Set up environment variables (create `.env.local`):
+   ```
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   # Add AI SDK credentials
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+- `/app` - Next.js app router pages and API routes
+- `/components` - Reusable React components
+- `/lib` - Utility functions and configurations
+- `/models` - MongoDB schemas
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-
-### Initial Ideas
-
-I want to build a PWA which is AI-powered. The biggest issue in my experience with the Expense tracking app is that I am too lazy to properly format the expenses and log is the application. The idea is that people don't think in forms and schemas; they think in sentences. So I want to use AI to reduce the friction of logging expenses and just do it.  Maybe using chat or just speech. So, expenses and income tracking would be the main thing. Rest others functionalty would be around these, like analysis of both these.  Most likely, I will have to make some graphs. Accounts (Bank, Cash, else) - Source from which expense would be reduced, or income would be added. And the transfer of money from one account to another is also an important case. Other features to give more control and customisation to the user, like instead of hardcoded expense catefgories user would be able to add their own. Tags on transactions. A budget section and Import -  Export if possible. I would also think about future extensibility so that it is flexible enough to be extended further.
-AI chat with the expese and income data for the Analysis and else.
-Maybe image data extraction for recieepts and else.  Using a good gemini model (gemini-2.5-flash). Or something similer.
-Overall, the idea is to deliver usable software, and for me, that's simplicity and elegance. 
-
-
- 
-I want to use Next.js since this would be a single code base, then it would be easier to iterate, and deployment on Vercel is simple. I will make use of Google Gen SDK directly and not rely on LangChain since these are straightforward use cases. I have recently tinkered with these - gemini-2.0-flash-exp (Audio interactions) and others like gemini-2.0-flash (for text interaction), so I would try to use these. 
-If I have to use Node.js Express.js backend, then I would preferably deploy that on AWS EC2, preferably writing a CI/CD using GitHub Actions and Docker Hub. And then Next.js would also be deployed here on EC2.  Like what I have done for this sample project: https://github.com/Ankitkj1999/mira-ai
-Since I am supposed to put more emphasis on making this interesting and incredible, I would like to go ahead with Next.js for full stack app for quicker iterations. And it has all that is required for this Expense Tracker App. 
-
-I will look for ideas and understanding of current dominant apps, so I understand what mostly works. And some new underdogs.
-So these are my thoughts. I will keep you posted on any meaningful progress, since it's good to be in a feedback loop, and whenever you think I need improvement or change, then please point it out.
-
-
-## **✅ CONFIRMED - Vercel AI SDK can handle ALL of this:**
-
----
-
-### **Your Use Cases:**
-
-| Feature | Vercel AI SDK Capability | Status |
-|---------|-------------------------|--------|
-| **Chat-based expense logging** | `streamText` + tools | ✅ YES |
-| **Create transactions via AI** | Function calling tools | ✅ YES |
-| **Create accounts/budgets/categories** | Function calling tools | ✅ YES |
-| **Analyze expenses (text responses)** | `streamText` | ✅ YES |
-| **Show charts/graphs** | Generative UI (`streamUI`) | ✅ YES |
-| **Receipt image → transaction** | Vision support (Gemini 2.0) | ✅ YES |
-| **Structured data extraction** | `generateObject` with Zod | ✅ YES |
-| **Streaming responses** | Built-in streaming | ✅ YES |
-| **MongoDB integration** | Via your tool functions | ✅ YES |
-
----
-
-## **One SDK, All Features:**
-
-```typescript
-import { 
-  streamText,      // Chat & analysis
-  streamUI,        // Charts & components
-  generateObject   // Receipt extraction
-} from 'ai';
-
-import { google } from '@ai-sdk/google';
-```
-
----
-
-## **Final Confirmation:**
-
-**YES** - Vercel AI SDK (`ai` package) + Google AI SDK (`@ai-sdk/google`) handles:
-- ✅ Text chat
-- ✅ Transaction creation
-- ✅ Data visualization (Generative UI)
-- ✅ Image analysis (receipts)
-- ✅ All CRUD operations via tools
-- ✅ Works with Gemini 2.0 Flash
-
-**You're good to go with just this stack!** 🚀
-
-No need for LangChain, no need for custom chat UI
+MIT

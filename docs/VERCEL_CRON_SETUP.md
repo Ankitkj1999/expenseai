@@ -197,3 +197,18 @@ Then redeploy to apply changes.
 - [Vercel Cron Documentation](https://vercel.com/docs/cron-jobs)
 - [Cron Expression Generator](https://crontab.guru/)
 - [Vercel Function Limits](https://vercel.com/docs/functions/limits)
+
+
+
+{
+  "crons": [
+    {
+      "path": "/api/recurring-transactions/process",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/insights/process",
+      "schedule": "0 20 * * 0"
+    }
+  ]
+}
