@@ -3,10 +3,11 @@ import { z } from 'zod';
 import { withDb } from '@/lib/middleware/withAuthAndDb';
 import User from '@/lib/db/models/User';
 import { hashPassword, generateToken } from '@/lib/utils/auth';
+import { CommonSchemas } from '@/lib/utils/validation';
 
 // Validation schema
 const registerSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: CommonSchemas.email,
   password: z.string().min(6, 'Password must be at least 6 characters'),
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
 });

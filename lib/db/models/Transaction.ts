@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { TRANSACTION_TYPES } from '@/lib/constants/enums';
 
 export interface ITransaction extends Document {
   userId: mongoose.Types.ObjectId;
@@ -36,12 +37,12 @@ const TransactionSchema = new Schema<ITransaction>(
     type: {
       type: String,
       required: true,
-      enum: ['expense', 'income', 'transfer'],
+      enum: TRANSACTION_TYPES,
     },
     amount: {
       type: Number,
       required: true,
-      min: 0,
+      min: [0.01, 'Amount must be greater than 0'],
     },
     description: {
       type: String,

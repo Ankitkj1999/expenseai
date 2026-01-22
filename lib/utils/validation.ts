@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { ApiResponse } from './responses';
 import type { NextResponse } from 'next/server';
 import type { ApiErrorResponse } from './responses';
+import {
+  ACCOUNT_TYPES,
+  TRANSACTION_TYPES,
+  CATEGORY_TYPES,
+  BUDGET_PERIODS,
+} from '@/lib/constants/enums';
 
 /**
  * Validation result types
@@ -91,6 +97,23 @@ export const CommonSchemas = {
   objectId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format'),
   
   /**
+   * Email validation with comprehensive rules
+   */
+  email: z.string()
+    .min(1, 'Email is required')
+    .email('Please provide a valid email address')
+    .toLowerCase()
+    .trim()
+    .max(255, 'Email cannot exceed 255 characters'),
+  
+  /**
+   * Hex color validation
+   */
+  hexColor: z.string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color format')
+    .transform(val => val.toUpperCase()),
+  
+  /**
    * Pagination parameters
    */
   pagination: z.object({
@@ -109,22 +132,22 @@ export const CommonSchemas = {
   /**
    * Transaction type enum
    */
-  transactionType: z.enum(['expense', 'income', 'transfer']),
+  transactionType: z.enum(TRANSACTION_TYPES),
   
   /**
    * Budget period enum
    */
-  budgetPeriod: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  budgetPeriod: z.enum(BUDGET_PERIODS),
   
   /**
    * Account type enum
    */
-  accountType: z.enum(['cash', 'bank', 'credit', 'wallet', 'savings']),
+  accountType: z.enum(ACCOUNT_TYPES),
   
   /**
    * Category type enum
    */
-  categoryType: z.enum(['expense', 'income']),
+  categoryType: z.enum(CATEGORY_TYPES),
 };
 
 /**
@@ -136,21 +159,21 @@ export const ValidationSchemas = {
    */
   account: {
     create: z.object({
-      name: z.string().min(1, 'Name is required').max(100),
+      name: z.string().min(1, 'Name is required').max(50, 'Name cannot exceed 50 characters'),
       type: CommonSchemas.accountType,
       balance: z.number().default(0),
       currency: z.string().length(3).default('INR'),
       icon: z.string().optional(),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      color: CommonSchemas.hexColor.optional(),
     }),
     
     update: z.object({
-      name: z.string().min(1).max(100).optional(),
+      name: z.string().min(1).max(50, 'Name cannot exceed 50 characters').optional(),
       type: CommonSchemas.accountType.optional(),
       balance: z.number().optional(),
       currency: z.string().length(3).optional(),
       icon: z.string().optional(),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      color: CommonSchemas.hexColor.optional(),
       isActive: z.boolean().optional(),
     }),
   },
@@ -209,17 +232,17 @@ export const ValidationSchemas = {
    */
   category: {
     create: z.object({
-      name: z.string().min(1, 'Name is required').max(100),
+      name: z.string().min(1, 'Name is required').max(50, 'Name cannot exceed 50 characters'),
       type: CommonSchemas.categoryType,
       icon: z.string().default('category'),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#6B7280'),
+      color: CommonSchemas.hexColor.default('#6B7280'),
     }),
     
     update: z.object({
-      name: z.string().min(1).max(100).optional(),
+      name: z.string().min(1).max(50, 'Name cannot exceed 50 characters').optional(),
       type: CommonSchemas.categoryType.optional(),
       icon: z.string().optional(),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      color: CommonSchemas.hexColor.optional(),
     }),
     
     query: z.object({
