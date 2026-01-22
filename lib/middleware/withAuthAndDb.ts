@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate } from './auth';
 import connectDB from '@/lib/db/mongodb';
+import { IUser } from '@/lib/db/models/User';
 
 /**
- * Extended NextRequest with authenticated user ID
+ * Extended NextRequest with authenticated user ID and full user object
  */
 export interface AuthenticatedRequest extends NextRequest {
   userId: string;
+  user: IUser;
 }
 
 /**
@@ -44,7 +46,7 @@ export function withAuthAndDb<T = unknown>(
       // Authenticate user
       const auth = await authenticate(request);
       
-      if (!auth.authenticated || !auth.userId) {
+      if (!auth.authenticated || !auth.userId || !auth.user) {
         return NextResponse.json(
           { error: auth.error || 'Unauthorized' },
           { status: 401 }
@@ -54,9 +56,10 @@ export function withAuthAndDb<T = unknown>(
       // Connect to database
       await connectDB();
 
-      // Attach userId to request for handler
+      // Attach userId and user object to request for handler
       const authenticatedRequest = request as AuthenticatedRequest;
       authenticatedRequest.userId = auth.userId;
+      authenticatedRequest.user = auth.user;
 
       // Call the actual handler
       return handler(authenticatedRequest, context);
