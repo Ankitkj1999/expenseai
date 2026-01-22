@@ -8,7 +8,7 @@ import { CommonSchemas } from '@/lib/utils/validation';
 // Validation schema
 const registerSchema = z.object({
   email: CommonSchemas.email,
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: CommonSchemas.password,
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
 });
 

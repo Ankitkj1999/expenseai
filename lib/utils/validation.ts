@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ApiResponse } from './responses';
+import { sanitizeInput } from './sanitize';
 import type { NextResponse } from 'next/server';
 import type { ApiErrorResponse } from './responses';
 import {
@@ -41,27 +42,40 @@ export function validateRequest<T>(
   schema: z.ZodSchema<T>,
   data: unknown
 ): ValidationResult<T> {
-  const result = schema.safeParse(data);
-  
-  if (!result.success) {
-    const errors = result.error.issues.map((err: z.ZodIssue) => ({
-      field: err.path.join('.'),
-      message: err.message,
-    }));
+  // First, sanitize the input to prevent NoSQL injection
+  try {
+    const sanitizedData = sanitizeInput(data);
+    const result = schema.safeParse(sanitizedData);
     
+    if (!result.success) {
+      const errors = result.error.issues.map((err: z.ZodIssue) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      
+      return {
+        success: false,
+        response: ApiResponse.badRequest(
+          errors[0].message,
+          errors
+        ),
+      };
+    }
+    
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    // Handle sanitization errors
     return {
       success: false,
       response: ApiResponse.badRequest(
-        errors[0].message,
-        errors
+        error instanceof Error ? error.message : 'Invalid input detected',
+        []
       ),
     };
   }
-  
-  return {
-    success: true,
-    data: result.data,
-  };
 }
 
 /**
@@ -105,6 +119,21 @@ export const CommonSchemas = {
     .toLowerCase()
     .trim()
     .max(255, 'Email cannot exceed 255 characters'),
+  
+  /**
+   * Strong password validation
+   * - Minimum 12 characters
+   * - At least one uppercase letter
+   * - At least one lowercase letter
+   * - At least one number
+   * - At least one special character
+   */
+  password: z.string()
+    .min(12, 'Password must be at least 12 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
   
   /**
    * Hex color validation

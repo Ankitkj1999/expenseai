@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate } from './auth';
 import connectDB from '@/lib/db/mongodb';
+import { validateRequestSize, SIZE_LIMITS } from './withSizeLimit';
 import { IUser } from '@/lib/db/models/User';
 
 /**
@@ -43,6 +44,18 @@ export function withAuthAndDb<T = unknown>(
 ) {
   return async (request: NextRequest, context?: T): Promise<Response> => {
     try {
+      // Validate request size first (before reading body)
+      if (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH') {
+        try {
+          await validateRequestSize(request, SIZE_LIMITS.default);
+        } catch (error) {
+          return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Request too large' },
+            { status: 413 }
+          );
+        }
+      }
+
       // Authenticate user
       const auth = await authenticate(request);
       
@@ -89,6 +102,18 @@ export function withDb<T = unknown>(
 ) {
   return async (request: NextRequest, context?: T): Promise<Response> => {
     try {
+      // Validate request size for auth routes (smaller limit)
+      if (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH') {
+        try {
+          await validateRequestSize(request, SIZE_LIMITS.auth);
+        } catch (error) {
+          return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Request too large' },
+            { status: 413 }
+          );
+        }
+      }
+
       // Connect to database
       await connectDB();
       
