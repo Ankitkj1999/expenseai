@@ -81,6 +81,25 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in createTransaction:', error);
+          // Return a helpful error message instead of throwing
+          if (error instanceof Error) {
+            if (error.message.includes('Account not found')) {
+              return {
+                success: false,
+                error: 'Account not found. Please call getAccounts first to get valid account IDs, then retry with a valid accountId.',
+              };
+            }
+            if (error.message.includes('Category not found')) {
+              return {
+                success: false,
+                error: 'Category not found. Please call getCategories first to get valid category IDs, then retry with a valid categoryId.',
+              };
+            }
+            return {
+              success: false,
+              error: error.message,
+            };
+          }
           throw error;
         }
       },
