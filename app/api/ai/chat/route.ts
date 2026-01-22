@@ -3,6 +3,7 @@ import { bedrock } from '@ai-sdk/amazon-bedrock';
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
 import ChatSession from '@/lib/db/models/ChatSession';
 import { tools } from '@/lib/services/aiService';
+import { getCurrencySymbol } from '@/lib/constants/currencies';
 import { z } from 'zod';
 
 /**
@@ -24,6 +25,11 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
     console.log('[AI Chat] ERROR: Invalid messages array');
     return new Response('Messages array is required', { status: 400 });
   }
+
+  // Get user preferences for currency from middleware (no DB query needed)
+  const userCurrency = request.user.preferences?.currency || 'USD';
+  const currencySymbol = getCurrencySymbol(userCurrency);
+  console.log('[AI Chat] User currency:', userCurrency, 'Symbol:', currencySymbol);
 
   // Get or create chat session
   let chatSession;
@@ -81,6 +87,25 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in createTransaction:', error);
+          // Return a helpful error message instead of throwing
+          if (error instanceof Error) {
+            if (error.message.includes('Account not found')) {
+              return {
+                success: false,
+                error: 'Account not found. Please call getAccounts first to get valid account IDs, then retry with a valid accountId.',
+              };
+            }
+            if (error.message.includes('Category not found')) {
+              return {
+                success: false,
+                error: 'Category not found. Please call getCategories first to get valid category IDs, then retry with a valid categoryId.',
+              };
+            }
+            return {
+              success: false,
+              error: error.message,
+            };
+          }
           throw error;
         }
       },
@@ -175,6 +200,11 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
       system: `You are a helpful AI assistant for ExpenseAI, an expense tracking application.
 You help users log expenses, track spending, analyze budgets, and answer financial questions.
 
+USER PREFERENCES:
+- User's preferred currency: ${userCurrency} (${currencySymbol})
+- ALWAYS use ${currencySymbol} when displaying monetary amounts
+- Format all currency values with the ${currencySymbol} symbol (e.g., ${currencySymbol}100.00)
+
 CRITICAL BUDGET TOOL USAGE:
 - When users ask about budgets or budget status, call getBudgetStatus WITHOUT any parameters
 - DO NOT pass a budgetId parameter unless the user explicitly provides a specific budget ID
@@ -195,7 +225,7 @@ GENERAL TOOL USAGE:
 - NEVER assume data doesn't exist - check first using appropriate tools
 - After using a tool, explain the results in natural language
 - Be conversational, friendly, and provide actionable insights
-- Present numbers with proper formatting (currency, percentages)
+- Present numbers with proper formatting using ${currencySymbol} for currency and percentages where appropriate
 
 Current date: ${new Date().toISOString().split('T')[0]}`,
       tools: aiTools,

@@ -98,10 +98,50 @@ export const tools = {
       );
 
       console.log('[AI Tool] getTransactions result - count:', transactions.total);
+      console.log('[AI Tool] DEBUG - First transaction type:', typeof transactions.transactions[0]);
+      console.log('[AI Tool] DEBUG - Is Mongoose document?', transactions.transactions[0]?.constructor?.name);
+
+      // Serialize Mongoose documents to plain objects to avoid DataCloneError
+      const serializedTransactions = transactions.transactions.map(t => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const account = t.accountId as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const toAccount = t.toAccountId as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const category = t.categoryId as any;
+        
+        return {
+          id: t._id.toString(),
+          type: t.type,
+          amount: t.amount,
+          description: t.description,
+          date: t.date.toISOString(),
+          account: account && typeof account === 'object' && account._id ? {
+            id: account._id.toString(),
+            name: account.name,
+            type: account.type,
+          } : null,
+          toAccount: toAccount && typeof toAccount === 'object' && toAccount._id ? {
+            id: toAccount._id.toString(),
+            name: toAccount.name,
+            type: toAccount.type,
+          } : null,
+          category: category && typeof category === 'object' && category._id ? {
+            id: category._id.toString(),
+            name: category.name,
+            icon: category.icon,
+            color: category.color,
+          } : null,
+          tags: Array.isArray(t.tags) ? [...t.tags] : [],
+          aiGenerated: t.aiGenerated || false,
+        };
+      });
+
+      console.log('[AI Tool] DEBUG - Serialized first transaction:', JSON.stringify(serializedTransactions[0], null, 2));
 
       return {
         success: true,
-        transactions: transactions.transactions,
+        transactions: serializedTransactions,
         count: transactions.total,
       };
     },
