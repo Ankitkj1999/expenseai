@@ -1,5 +1,7 @@
 import Account from '@/lib/db/models/Account';
 import type { IAccount } from '@/lib/db/models/Account';
+import mongoose from 'mongoose';
+import cache from '@/lib/utils/cache';
 
 /**
  * Account Service
@@ -34,22 +36,58 @@ export interface AccountListResult {
 export const accountService = {
   /**
    * Get all active accounts for a user
+   * Uses aggregation to calculate total balance on database side
+   * Implements caching with 5-minute TTL
    * @param userId - User ID
    * @returns List of accounts with total balance
    */
   async getAll(userId: string): Promise<AccountListResult> {
-    const accounts = await Account.find({
-      userId,
-      isActive: true,
-    }).sort({ createdAt: -1 });
+    const cacheKey = `accounts:${userId}`;
+    
+    // Try to get from cache
+    const cached = cache.get<AccountListResult>(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
-    const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+    // Use aggregation with $facet to get both accounts and total balance in one query
+    const [result] = await Account.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          isActive: true,
+        },
+      },
+      {
+        $facet: {
+          accounts: [
+            { $sort: { createdAt: -1 } },
+          ],
+          totalBalance: [
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$balance' },
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
-    return {
+    const accounts = result.accounts || [];
+    const totalBalance = result.totalBalance[0]?.total || 0;
+
+    const accountResult = {
       accounts,
       totalBalance,
       count: accounts.length,
     };
+
+    // Cache for 5 minutes
+    cache.set(cacheKey, accountResult, 300);
+
+    return accountResult;
   },
 
   /**
@@ -67,12 +105,13 @@ export const accountService = {
 
   /**
    * Create a new account
+   * Invalidates cache after creation
    * @param userId - User ID
    * @param data - Account data
    * @returns Created account
    */
   async create(userId: string, data: CreateAccountDto): Promise<IAccount> {
-    return Account.create({
+    const account = await Account.create({
       userId,
       name: data.name,
       type: data.type,
@@ -81,10 +120,16 @@ export const accountService = {
       icon: data.icon ?? 'wallet',
       color: data.color ?? '#3B82F6',
     });
+
+    // Invalidate cache
+    cache.delete(`accounts:${userId}`);
+
+    return account;
   },
 
   /**
    * Update an account
+   * Invalidates cache after update
    * @param userId - User ID
    * @param accountId - Account ID
    * @param data - Update data
@@ -95,25 +140,40 @@ export const accountService = {
     accountId: string,
     data: UpdateAccountDto
   ): Promise<IAccount | null> {
-    return Account.findOneAndUpdate(
+    const account = await Account.findOneAndUpdate(
       { _id: accountId, userId },
       data,
       { new: true, runValidators: true }
     );
+
+    // Invalidate cache
+    if (account) {
+      cache.delete(`accounts:${userId}`);
+    }
+
+    return account;
   },
 
   /**
    * Soft delete an account
+   * Invalidates cache after deletion
    * @param userId - User ID
    * @param accountId - Account ID
    * @returns Updated account or null
    */
   async delete(userId: string, accountId: string): Promise<IAccount | null> {
-    return Account.findOneAndUpdate(
+    const account = await Account.findOneAndUpdate(
       { _id: accountId, userId },
       { isActive: false },
       { new: true }
     );
+
+    // Invalidate cache
+    if (account) {
+      cache.delete(`accounts:${userId}`);
+    }
+
+    return account;
   },
 
   /**

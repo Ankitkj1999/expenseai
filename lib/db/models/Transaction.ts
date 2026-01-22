@@ -104,6 +104,11 @@ TransactionSchema.index({ userId: 1, type: 1, date: -1 });
 TransactionSchema.index({ userId: 1, accountId: 1, date: -1 });
 TransactionSchema.index({ userId: 1, categoryId: 1, date: -1 });
 
+// Additional indexes for analytics and filtered queries
+TransactionSchema.index({ userId: 1, type: 1, categoryId: 1, date: -1 }); // Category breakdown analytics
+TransactionSchema.index({ userId: 1, accountId: 1, type: 1, date: -1 }); // Account-specific filtering
+TransactionSchema.index({ userId: 1, date: 1 }); // Ascending date queries for trends
+
 const Transaction: Model<ITransaction> =
   mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema);
 
