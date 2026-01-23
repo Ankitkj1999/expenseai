@@ -34,6 +34,7 @@ const AccountSchema = new Schema<IAccount>(
       required: true,
       enum: ACCOUNT_TYPES,
     },
+    // Implement on the fly calulation of balance from transactions later
     balance: {
       type: Number,
       required: true,
