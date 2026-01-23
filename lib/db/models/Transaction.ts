@@ -32,7 +32,6 @@ const TransactionSchema = new Schema<ITransaction>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     type: {
       type: String,
@@ -77,7 +76,6 @@ const TransactionSchema = new Schema<ITransaction>(
       type: Date,
       required: true,
       default: Date.now,
-      index: true,
     },
     attachments: [{
       url: String,
@@ -98,16 +96,17 @@ const TransactionSchema = new Schema<ITransaction>(
   }
 );
 
-// Compound indexes for efficient queries
-TransactionSchema.index({ userId: 1, date: -1 });
-TransactionSchema.index({ userId: 1, type: 1, date: -1 });
-TransactionSchema.index({ userId: 1, accountId: 1, date: -1 });
-TransactionSchema.index({ userId: 1, categoryId: 1, date: -1 });
+// Strategic compound indexes optimized for query patterns and write performance
+// These 3 indexes provide comprehensive coverage while minimizing write overhead
 
-// Additional indexes for analytics and filtered queries
-TransactionSchema.index({ userId: 1, type: 1, categoryId: 1, date: -1 }); // Category breakdown analytics
-TransactionSchema.index({ userId: 1, accountId: 1, type: 1, date: -1 }); // Account-specific filtering
-TransactionSchema.index({ userId: 1, date: 1 }); // Ascending date queries for trends
+// Primary index - covers most transaction queries (list, date ranges, trends)
+TransactionSchema.index({ userId: 1, date: -1 });
+
+// Type-filtered queries - essential for analytics, category breakdown, and expense/income separation
+TransactionSchema.index({ userId: 1, type: 1, date: -1 });
+
+// Account-specific queries - important for account detail pages and balance calculations
+TransactionSchema.index({ userId: 1, accountId: 1, date: -1 });
 
 const Transaction: Model<ITransaction> =
   mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema);
