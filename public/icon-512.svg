@@ -1,4 +1,31 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#000000"/>
-  <path d="M256 128C208.872 128 171 165.872 171 213C171 237.024 181.411 258.64 198.4 273.067V316.8C198.4 324.648 204.752 331 212.6 331H299.4C307.248 331 313.6 324.648 313.6 316.8V273.067C330.589 258.64 341 237.024 341 213C341 165.872 303.128 128 256 128ZM256 162.133C284.291 162.133 306.867 184.709 306.867 213C306.867 229.867 298.384 245.76 284.8 255.147L280.533 258.133V296.867H231.467V258.133L227.2 255.147C213.616 245.76 205.133 229.867 205.133 213C205.133 184.709 227.709 162.133 256 162.133ZM231.467 341.333C227.609 341.333 222.4 345.744 222.4 349.867V358.4C222.4 362.523 227.609 366.933 231.467 366.933H280.533C284.391 366.933 289.6 362.523 289.6 358.4V349.867C289.6 345.744 284.391 341.333 280.533 341.333H231.467Z" fill="#3B82F6"/>
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00a8cc;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#grad2)"/>
+  
+  <!-- Wallet/Receipt base -->
+  <rect x="140" y="180" width="232" height="180" rx="16" fill="url(#grad1)" opacity="0.15"/>
+  
+  <!-- Receipt lines -->
+  <line x1="170" y1="220" x2="280" y2="220" stroke="url(#grad1)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="170" y1="256" x2="320" y2="256" stroke="url(#grad1)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="170" y1="292" x2="240" y2="292" stroke="url(#grad1)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- AI Spark accent -->
+  <path d="M 320 160 L 340 200 L 380 220 L 340 240 L 320 280 L 300 240 L 260 220 L 300 200 Z" 
+        fill="url(#grad1)" opacity="0.9"/>
+  
+  <!-- Small accent sparks -->
+  <circle cx="200" cy="330" r="6" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="340" cy="310" r="4" fill="#00d4ff" opacity="0.6"/>
 </svg>

@@ -1,0 +1,31 @@
+<svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00a8cc;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="url(#grad2)"/>
+  
+  <!-- Wallet/Receipt base -->
+  <rect x="49" y="63" width="82" height="63" rx="6" fill="url(#grad1)" opacity="0.15"/>
+  
+  <!-- Receipt lines -->
+  <line x1="59" y1="77" x2="98" y2="77" stroke="url(#grad1)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="59" y1="90" x2="113" y2="90" stroke="url(#grad1)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="59" y1="103" x2="84" y2="103" stroke="url(#grad1)" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- AI Spark accent -->
+  <path d="M 113 56 L 119 70 L 133 77 L 119 84 L 113 98 L 106 84 L 92 77 L 106 70 Z" 
+        fill="url(#grad1)" opacity="0.9"/>
+  
+  <!-- Small accent sparks -->
+  <circle cx="70" cy="116" r="2" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="119" cy="109" r="1.5" fill="#00d4ff" opacity="0.6"/>
+</svg>
