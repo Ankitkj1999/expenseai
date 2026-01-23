@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -17,14 +17,9 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
 import { getErrorMessage } from '@/lib/utils/errorHandling';
+import { AuthSchemas } from '@/lib/validations/schemas';
 
-// Validation schema
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = z.infer<typeof AuthSchemas.login>;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,7 +31,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(AuthSchemas.login),
   });
 
   const onSubmit = async (data: LoginFormData) => {
