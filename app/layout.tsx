@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { UserPreferencesProvider } from "@/lib/contexts/UserPreferencesContext";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { PWARegister } from "@/components/pwa";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ExpenseAI - AI-Powered Expense Tracking",
   description: "Track your expenses with AI-powered insights and analytics",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ExpenseAI",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
@@ -38,6 +51,7 @@ export default function RootLayout({
               <UserPreferencesProvider>
                 {children}
                 <Toaster />
+                <PWARegister />
               </UserPreferencesProvider>
             </AuthProvider>
           </QueryProvider>
