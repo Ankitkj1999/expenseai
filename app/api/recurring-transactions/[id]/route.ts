@@ -92,7 +92,18 @@ export const DELETE = withAuthAndDb(async (
 ) => {
   const { id } = await context!.params;
   
-  await recurringTransactionService.deleteRecurringTransaction(request.userId, id);
-  
-  return ApiResponse.successWithMessage({}, 'Recurring transaction deleted successfully');
+  try {
+    await recurringTransactionService.deleteRecurringTransaction(request.userId, id);
+    
+    return ApiResponse.successWithMessage({}, 'Recurring transaction deleted successfully');
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        return ApiResponse.notFound('Recurring transaction');
+      }
+      return ApiResponse.badRequest(error.message);
+    }
+    return ApiResponse.serverError();
+  }
 });

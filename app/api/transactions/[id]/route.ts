@@ -54,17 +54,28 @@ export const PUT = withAuthAndDb(async (
   if (data.aiGenerated !== undefined) updates.aiGenerated = data.aiGenerated;
   if (data.metadata !== undefined) updates.metadata = data.metadata;
   
-  // Update transaction with balance adjustments
-  const transaction = await updateTransaction(request.userId, id, updates);
-  
-  // Populate all references in a single call using array syntax
-  await transaction.populate([
-    { path: 'accountId', select: 'name type icon color' },
-    { path: 'toAccountId', select: 'name type icon color' },
-    { path: 'categoryId', select: 'name icon color' }
-  ]);
-  
-  return ApiResponse.successWithMessage({ transaction }, 'Transaction updated successfully');
+  try {
+    // Update transaction with balance adjustments
+    const transaction = await updateTransaction(request.userId, id, updates);
+    
+    // Populate all references in a single call using array syntax
+    await transaction.populate([
+      { path: 'accountId', select: 'name type icon color' },
+      { path: 'toAccountId', select: 'name type icon color' },
+      { path: 'categoryId', select: 'name icon color' }
+    ]);
+    
+    return ApiResponse.successWithMessage({ transaction }, 'Transaction updated successfully');
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        return ApiResponse.notFound('Transaction');
+      }
+      return ApiResponse.badRequest(error.message);
+    }
+    return ApiResponse.serverError();
+  }
 });
 
 // DELETE /api/transactions/[id] - Delete a transaction
@@ -74,8 +85,19 @@ export const DELETE = withAuthAndDb(async (
 ) => {
   const { id } = await context!.params;
   
-  // Delete transaction with balance reversion
-  await deleteTransaction(request.userId, id);
-  
-  return ApiResponse.successWithMessage({}, 'Transaction deleted successfully');
+  try {
+    // Delete transaction with balance reversion
+    await deleteTransaction(request.userId, id);
+    
+    return ApiResponse.successWithMessage({}, 'Transaction deleted successfully');
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        return ApiResponse.notFound('Transaction');
+      }
+      return ApiResponse.badRequest(error.message);
+    }
+    return ApiResponse.serverError();
+  }
 });
