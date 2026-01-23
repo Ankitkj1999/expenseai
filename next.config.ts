@@ -45,6 +45,8 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.amazonaws.com",
+              "manifest-src 'self'",
+              "worker-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'"
