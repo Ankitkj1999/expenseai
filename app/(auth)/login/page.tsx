@@ -16,6 +16,7 @@ import { GuestGuard } from '@/components/auth/GuestGuard';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
+import { getErrorMessage } from '@/lib/utils/errorHandling';
 
 // Validation schema
 const loginSchema = z.object({
@@ -48,7 +49,7 @@ export default function LoginPage() {
       // Use replace instead of push to prevent back navigation to login
       router.replace('/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid email or password';
+      const message = getErrorMessage(error, 'Invalid email or password');
       toast.error(message);
     } finally {
       setIsLoading(false);
