@@ -47,8 +47,9 @@ api.interceptors.response.use(
       
       // Handle authentication errors - redirect to login
       if (error.response.status === 401) {
-        // Only redirect if not already on auth pages
+        // Only redirect if not already on auth pages or landing page
         if (typeof window !== 'undefined' &&
+            window.location.pathname !== '/' &&
             !window.location.pathname.startsWith('/login') &&
             !window.location.pathname.startsWith('/signup')) {
           window.location.href = '/login';
