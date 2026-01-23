@@ -5,6 +5,7 @@ import { transactionsApi } from '@/lib/api/transactions';
 import { queryKeys } from '@/lib/constants/queryKeys';
 import type { TransactionResponse, CreateTransactionRequest, UpdateTransactionRequest } from '@/types';
 import { toast } from 'sonner';
+import { handleApiError } from '@/lib/utils/errorHandling';
 
 /**
  * Hook to fetch all transactions
@@ -28,9 +29,9 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       toast.success('Transaction created successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to create transaction:', error);
-      toast.error('Failed to create transaction');
+      handleApiError(error, 'Failed to create transaction');
     },
   });
 }
@@ -48,9 +49,9 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
       toast.success('Transaction updated successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to update transaction:', error);
-      toast.error('Failed to update transaction');
+      handleApiError(error, 'Failed to update transaction');
     },
   });
 }
@@ -85,13 +86,13 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       toast.success('Transaction deleted successfully');
     },
-    onError: (error: Error, _id, context) => {
+    onError: (error, _id, context) => {
       // Rollback to previous value on error
       if (context?.previousTransactions) {
         queryClient.setQueryData(queryKeys.transactions(), context.previousTransactions);
       }
       console.error('Failed to delete transaction:', error);
-      toast.error('Failed to delete transaction');
+      handleApiError(error, 'Failed to delete transaction');
     },
     // Always refetch after error or success to ensure consistency
     onSettled: () => {

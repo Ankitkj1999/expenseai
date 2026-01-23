@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -16,26 +16,27 @@ import { GuestGuard } from '@/components/auth/GuestGuard';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
+import { getErrorMessage } from '@/lib/utils/errorHandling';
+import { AuthSchemas } from '@/lib/validations/schemas';
 
-// Validation schema
-const signupSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+type SignupFormData = z.infer<typeof AuthSchemas.register>;
 
-type SignupFormData = z.infer<typeof signupSchema>;
-
-// Password strength indicator
+// Password strength indicator - updated to match 12-char requirement
 function getPasswordStrength(password: string): { strength: number; label: string; color: string } {
   if (password.length === 0) return { strength: 0, label: '', color: '' };
-  if (password.length < 6) return { strength: 25, label: 'Weak', color: 'bg-destructive' };
-  if (password.length < 8) return { strength: 50, label: 'Fair', color: 'bg-chart-4' };
-  if (password.length < 12) return { strength: 75, label: 'Good', color: 'bg-accent' };
+  if (password.length < 8) return { strength: 20, label: 'Very Weak', color: 'bg-destructive' };
+  if (password.length < 12) return { strength: 40, label: 'Weak', color: 'bg-chart-4' };
+  
+  // Check for required character types
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  
+  const requirementsMet = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+  
+  if (requirementsMet < 3) return { strength: 60, label: 'Fair', color: 'bg-chart-4' };
+  if (requirementsMet < 4) return { strength: 80, label: 'Good', color: 'bg-accent' };
   return { strength: 100, label: 'Strong', color: 'bg-chart-3' };
 }
 
@@ -51,7 +52,7 @@ export default function SignupPage() {
     formState: { errors },
     watch,
   } = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
+    resolver: zodResolver(AuthSchemas.register),
   });
 
   const password = watch('password', '');
@@ -64,7 +65,7 @@ export default function SignupPage() {
       toast.success('Account created successfully!');
       router.push('/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create account';
+      const message = getErrorMessage(error, 'Failed to create account');
       toast.error(message);
     } finally {
       setIsLoading(false);

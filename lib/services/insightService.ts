@@ -22,6 +22,49 @@ export async function getInsights(userId: string): Promise<IAIInsight[]> {
 }
 
 /**
+ * Balance insights to ensure we have at least one alert and one suggestion
+ * This ensures the UI can display a balanced view of insights
+ * 
+ * Strategy:
+ * - Return exactly 1 alert + 1 suggestion when both are available
+ * - If only one category exists, return up to 2 from that category
+ * - Always prioritize by: high > medium > low within each category
+ */
+function balanceInsightCategories(insights: IInsight[]): IInsight[] {
+  if (insights.length === 0) {
+    return [];
+  }
+
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+
+  // Separate insights by category and sort by priority
+  const alerts = insights
+    .filter(i => i.category === 'alert')
+    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+  const suggestions = insights
+    .filter(i => i.category === 'advice' || i.category === 'achievement')
+    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+  const balancedInsights: IInsight[] = [];
+
+  // STRICT BALANCING: Return exactly 1 alert + 1 suggestion when both exist
+  if (alerts.length > 0 && suggestions.length > 0) {
+    // Perfect case: we have both categories
+    balancedInsights.push(alerts[0]);      // Highest priority alert
+    balancedInsights.push(suggestions[0]); // Highest priority suggestion
+  } else if (alerts.length > 0) {
+    // Only alerts available - return up to 2
+    balancedInsights.push(...alerts.slice(0, 2));
+  } else if (suggestions.length > 0) {
+    // Only suggestions available - return up to 2
+    balancedInsights.push(...suggestions.slice(0, 2));
+  }
+
+  return balancedInsights;
+}
+
+/**
  * Generate weekly insights for a user
  */
 export async function generateWeeklyInsights(userId: string): Promise<IAIInsight> {
@@ -288,6 +331,29 @@ export async function generateWeeklyInsights(userId: string): Promise<IAIInsight
   }
 
   console.log('[AI Insights] Generated insights count:', insights.length);
+  console.log('[AI Insights] Generated insights by category:', {
+    alerts: insights.filter(i => i.category === 'alert').length,
+    advice: insights.filter(i => i.category === 'advice').length,
+    achievement: insights.filter(i => i.category === 'achievement').length,
+  });
+  
+  // Log each generated insight for debugging
+  insights.forEach((insight, idx) => {
+    console.log(`[AI Insights] Generated #${idx + 1}: [${insight.category.toUpperCase()}] ${insight.title} (${insight.priority})`);
+  });
+
+  // Balance insights to ensure we have at least one alert and one suggestion
+  const balancedInsights = balanceInsightCategories(insights);
+  console.log('[AI Insights] Balanced insights count:', balancedInsights.length);
+  console.log('[AI Insights] Balanced insights by category:', {
+    alerts: balancedInsights.filter(i => i.category === 'alert').length,
+    suggestions: balancedInsights.filter(i => i.category === 'advice' || i.category === 'achievement').length,
+  });
+  
+  // Log each balanced insight for debugging
+  balancedInsights.forEach((insight, idx) => {
+    console.log(`[AI Insights] Balanced #${idx + 1}: [${insight.category.toUpperCase()}] ${insight.title} (${insight.priority})`);
+  });
 
   // Create insight document
   // Calculate expiration date (7 days for weekly insights)
@@ -297,7 +363,7 @@ export async function generateWeeklyInsights(userId: string): Promise<IAIInsight
   const aiInsight = await AIInsight.create({
     userId,
     type: 'weekly',
-    insights,
+    insights: balancedInsights,
     generatedAt: now,
     expiresAt,
   });

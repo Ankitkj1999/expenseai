@@ -130,15 +130,26 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
   
   const data = validation.data;
   
-  // Create transaction with balance updates
-  const transaction = await createTransaction(request.userId, data as unknown as Parameters<typeof createTransaction>[1]);
-  
-  // Populate all references in a single call using array syntax
-  await transaction.populate([
-    { path: 'accountId', select: 'name type icon color' },
-    { path: 'toAccountId', select: 'name type icon color' },
-    { path: 'categoryId', select: 'name icon color' }
-  ]);
-  
-  return ApiResponse.created(transaction, 'Transaction created successfully');
+  try {
+    // Create transaction with balance updates
+    const transaction = await createTransaction(request.userId, data as unknown as Parameters<typeof createTransaction>[1]);
+    
+    // Populate all references in a single call using array syntax
+    await transaction.populate([
+      { path: 'accountId', select: 'name type icon color' },
+      { path: 'toAccountId', select: 'name type icon color' },
+      { path: 'categoryId', select: 'name icon color' }
+    ]);
+    
+    return ApiResponse.created(transaction, 'Transaction created successfully');
+  } catch (error) {
+    // Handle service errors
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        return ApiResponse.notFound(error.message.includes('Destination') ? 'Destination account' : 'Account');
+      }
+      return ApiResponse.badRequest(error.message);
+    }
+    return ApiResponse.serverError();
+  }
 });

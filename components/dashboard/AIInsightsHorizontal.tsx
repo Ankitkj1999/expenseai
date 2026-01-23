@@ -83,21 +83,22 @@ export function AIInsightsHorizontal() {
       let allInsights: IInsight[] = [];
       
       if (Array.isArray(data)) {
-        // If data is an array of insight documents
-        allInsights = data.flatMap(doc => doc.insights || []);
+        // If data is an array of insight documents, use ONLY the most recent one
+        // The backend already returns documents sorted by generatedAt desc
+        if (data.length > 0) {
+          allInsights = data[0].insights || [];
+        }
       } else if (data && typeof data === 'object' && 'insights' in data) {
         // If data is a single insight document
         allInsights = (data as IAIInsight).insights || [];
       }
       
-      // Filter unread insights and sort by priority
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      const sortedInsights = allInsights
-        .filter(insight => !insight.isRead)
-        .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
-        .slice(0, 2); // Show top 2 insights
+      // The backend already balances insights, so we just take them as-is
+      // Filter only unread insights
+      const unreadInsights = allInsights.filter(insight => !insight.isRead);
       
-      setInsights(sortedInsights);
+      // Limit to 2 insights for horizontal display
+      setInsights(unreadInsights.slice(0, 2));
     } catch (error) {
       console.error('Failed to fetch insights:', error);
       toast.error('Failed to load insights');

@@ -8,7 +8,9 @@ import { CommonSchemas } from '@/lib/utils/validation';
 // Validation schema
 const loginSchema = z.object({
   email: CommonSchemas.email,
-  password: z.string().min(1, 'Password is required'),
+  password: z.string()
+    .min(1, 'Password is required')
+    .max(128, 'Password cannot exceed 128 characters'),
 });
 
 export const POST = withDb(async (request: NextRequest) => {
