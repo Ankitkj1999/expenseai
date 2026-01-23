@@ -76,13 +76,11 @@ const AIInsightSchema = new Schema<IAIInsight>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     type: {
       type: String,
       required: true,
       enum: ['weekly', 'monthly', 'realtime'],
-      index: true,
     },
     insights: {
       type: [InsightSchema],
@@ -92,7 +90,6 @@ const AIInsightSchema = new Schema<IAIInsight>(
       type: Date,
       required: true,
       default: Date.now,
-      index: true,
     },
     expiresAt: {
       type: Date,
@@ -101,7 +98,6 @@ const AIInsightSchema = new Schema<IAIInsight>(
     isStale: {
       type: Boolean,
       default: false,
-      index: true,
     },
   },
   {
@@ -109,10 +105,12 @@ const AIInsightSchema = new Schema<IAIInsight>(
   }
 );
 
-// Compound indexes for efficient queries
+// Optimized compound indexes for efficient queries
+// Primary queries - covers userId + type filtering + sorting by generation date
 AIInsightSchema.index({ userId: 1, type: 1, generatedAt: -1 });
-AIInsightSchema.index({ userId: 1, isStale: 1 });
-AIInsightSchema.index({ expiresAt: 1 }); // For cleanup cron job
+
+// Cleanup cron job - finds expired insights for deletion
+AIInsightSchema.index({ expiresAt: 1 });
 
 // Auto-set expiration date based on type
 AIInsightSchema.pre('save', function () {

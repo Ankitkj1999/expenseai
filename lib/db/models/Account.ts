@@ -21,7 +21,6 @@ const AccountSchema = new Schema<IAccount>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     name: {
       type: String,
@@ -66,7 +65,7 @@ const AccountSchema = new Schema<IAccount>(
   }
 );
 
-// Index for efficient queries
+// Optimized index for efficient account queries
 AccountSchema.index({ userId: 1, isActive: 1 });
 
 // Color normalization pre-save hook

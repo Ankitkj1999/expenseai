@@ -65,7 +65,6 @@ const ChatSessionSchema = new Schema<IChatSession>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     messages: {
       type: [MessageSchema],
@@ -82,9 +81,8 @@ const ChatSessionSchema = new Schema<IChatSession>(
   }
 );
 
-// Indexes for efficient queries
-ChatSessionSchema.index({ userId: 1, createdAt: -1 });
-ChatSessionSchema.index({ userId: 1, updatedAt: -1 }); // For pagination
+// Optimized index for efficient queries - covers all session list queries
+ChatSessionSchema.index({ userId: 1, updatedAt: -1 });
 
 const ChatSession: Model<IChatSession> =
   mongoose.models.ChatSession ||
