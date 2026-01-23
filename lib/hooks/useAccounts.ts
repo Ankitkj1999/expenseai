@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountsApi, type Account, type AccountsListResult, type CreateAccountRequest, type UpdateAccountRequest } from '@/lib/api/accounts';
 import { queryKeys } from '@/lib/constants/queryKeys';
 import { toast } from 'sonner';
+import { handleApiError } from '@/lib/utils/errorHandling';
 
 /**
  * Hook to fetch all accounts with total balance
@@ -29,9 +30,9 @@ export function useCreateAccount() {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
       toast.success('Account created successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to create account:', error);
-      toast.error('Failed to create account');
+      handleApiError(error, 'Failed to create account');
     },
   });
 }
@@ -49,9 +50,9 @@ export function useUpdateAccount() {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
       toast.success('Account updated successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to update account:', error);
-      toast.error('Failed to update account');
+      handleApiError(error, 'Failed to update account');
     },
   });
 }
@@ -81,12 +82,12 @@ export function useDeleteAccount() {
     onSuccess: () => {
       toast.success('Account deleted successfully');
     },
-    onError: (error: Error, _id, context) => {
+    onError: (error, _id, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(queryKeys.accounts, context.previousData);
       }
       console.error('Failed to delete account:', error);
-      toast.error('Failed to delete account');
+      handleApiError(error, 'Failed to delete account');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts });

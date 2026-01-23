@@ -16,6 +16,7 @@ import { GuestGuard } from '@/components/auth/GuestGuard';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
+import { getErrorMessage } from '@/lib/utils/errorHandling';
 
 // Validation schema
 const signupSchema = z.object({
@@ -64,7 +65,7 @@ export default function SignupPage() {
       toast.success('Account created successfully!');
       router.push('/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create account';
+      const message = getErrorMessage(error, 'Failed to create account');
       toast.error(message);
     } finally {
       setIsLoading(false);

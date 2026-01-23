@@ -9,6 +9,7 @@ import {
 } from '@/lib/api/recurring';
 import { queryKeys } from '@/lib/constants/queryKeys';
 import { toast } from 'sonner';
+import { handleApiError } from '@/lib/utils/errorHandling';
 
 /**
  * Hook to fetch all recurring transactions
@@ -32,9 +33,9 @@ export function useCreateRecurringTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.recurring });
       toast.success('Recurring transaction created successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to create recurring transaction:', error);
-      toast.error('Failed to create recurring transaction');
+      handleApiError(error, 'Failed to create recurring transaction');
     },
   });
 }
@@ -52,9 +53,9 @@ export function useUpdateRecurringTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.recurring });
       toast.success('Recurring transaction updated successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to update recurring transaction:', error);
-      toast.error('Failed to update recurring transaction');
+      handleApiError(error, 'Failed to update recurring transaction');
     },
   });
 }
@@ -71,9 +72,9 @@ export function useDeleteRecurringTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.recurring });
       toast.success('Recurring transaction deleted successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to delete recurring transaction:', error);
-      toast.error('Failed to delete recurring transaction');
+      handleApiError(error, 'Failed to delete recurring transaction');
     },
   });
 }
@@ -90,9 +91,9 @@ export function usePauseRecurringTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.recurring });
       toast.success('Recurring transaction paused');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to pause recurring transaction:', error);
-      toast.error('Failed to pause recurring transaction');
+      handleApiError(error, 'Failed to pause recurring transaction');
     },
   });
 }
@@ -109,9 +110,9 @@ export function useResumeRecurringTransaction() {
       queryClient.invalidateQueries({ queryKey: queryKeys.recurring });
       toast.success('Recurring transaction resumed');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to resume recurring transaction:', error);
-      toast.error('Failed to resume recurring transaction');
+      handleApiError(error, 'Failed to resume recurring transaction');
     },
   });
 }

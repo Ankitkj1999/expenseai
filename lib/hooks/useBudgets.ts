@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { budgetsApi, type Budget, type CreateBudgetRequest, type UpdateBudgetRequest } from '@/lib/api/budgets';
 import { queryKeys } from '@/lib/constants/queryKeys';
 import { toast } from 'sonner';
+import { handleApiError } from '@/lib/utils/errorHandling';
 
 /**
  * Hook to fetch all budgets
@@ -27,9 +28,9 @@ export function useCreateBudget() {
       queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
       toast.success('Budget created successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to create budget:', error);
-      toast.error('Failed to create budget');
+      handleApiError(error, 'Failed to create budget');
     },
   });
 }
@@ -47,9 +48,9 @@ export function useUpdateBudget() {
       queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
       toast.success('Budget updated successfully');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Failed to update budget:', error);
-      toast.error('Failed to update budget');
+      handleApiError(error, 'Failed to update budget');
     },
   });
 }
@@ -79,12 +80,12 @@ export function useDeleteBudget() {
     onSuccess: () => {
       toast.success('Budget deleted successfully');
     },
-    onError: (error: Error, _id, context) => {
+    onError: (error, _id, context) => {
       if (context?.previousBudgets) {
         queryClient.setQueryData(queryKeys.budgets, context.previousBudgets);
       }
       console.error('Failed to delete budget:', error);
-      toast.error('Failed to delete budget');
+      handleApiError(error, 'Failed to delete budget');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
