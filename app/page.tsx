@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
-  Sparkles,
   TrendingUp,
   PiggyBank,
   Zap,
@@ -18,6 +17,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 import { AnimatedBackground } from '@/components/landing/AnimatedBackground';
 import { ParallaxHero } from '@/components/landing/ParallaxHero';
 import { useState } from 'react';
@@ -38,7 +38,7 @@ const staggerContainer = {
 
 const features = [
   {
-    icon: Sparkles,
+    icon: Zap,
     title: 'AI-Powered Insights',
     description: 'Get intelligent recommendations and spending analysis powered by advanced AI.',
     color: 'text-primary',
@@ -103,7 +103,7 @@ export default function LandingPage() {
               {/* Logo */}
               <Link href="/" className="flex items-center space-x-2 group">
                 <div className="relative">
-                  <Sparkles className="h-7 w-7 md:h-8 md:w-8 text-primary transition-transform group-hover:scale-110" />
+                  <Logo className="h-7 w-7 md:h-8 md:w-8 transition-transform group-hover:scale-110" />
                   <div className="absolute inset-0 blur-xl bg-primary/30 group-hover:bg-primary/50 transition-all" />
                 </div>
                 <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
@@ -305,7 +305,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Sparkles className="h-6 w-6 text-primary" />
+              <Logo className="h-6 w-6" />
               <span className="text-lg font-semibold">ExpenseAI</span>
             </div>
             <p className="text-muted-foreground text-sm">
