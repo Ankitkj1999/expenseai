@@ -123,6 +123,7 @@ export const CommonSchemas = {
   /**
    * Strong password validation
    * - Minimum 12 characters
+   * - Maximum 128 characters (prevents DoS via bcrypt resource exhaustion)
    * - At least one uppercase letter
    * - At least one lowercase letter
    * - At least one number
@@ -130,6 +131,7 @@ export const CommonSchemas = {
    */
   password: z.string()
     .min(12, 'Password must be at least 12 characters')
+    .max(128, 'Password cannot exceed 128 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number')
