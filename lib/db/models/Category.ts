@@ -17,7 +17,6 @@ const CategorySchema = new Schema<ICategory>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       default: null,
-      index: true,
     },
     name: {
       type: String,
@@ -50,9 +49,14 @@ const CategorySchema = new Schema<ICategory>(
   }
 );
 
-// Indexes for efficient queries
-CategorySchema.index({ userId: 1, name: 1 }, { unique: true, sparse: true }); // Prevent duplicate names per user
+// Optimized indexes for efficient queries
+// Unique constraint - prevents duplicate category names per user
+CategorySchema.index({ userId: 1, name: 1 }, { unique: true, sparse: true });
+
+// User categories filtered by type
 CategorySchema.index({ userId: 1, type: 1 });
+
+// System categories filtered by type
 CategorySchema.index({ isSystem: 1, type: 1 });
 
 // Color normalization pre-save hook

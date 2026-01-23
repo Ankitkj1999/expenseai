@@ -29,7 +29,6 @@ const RecurringTransactionSchema = new Schema<IRecurringTransaction>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     type: {
       type: String,
@@ -79,7 +78,6 @@ const RecurringTransactionSchema = new Schema<IRecurringTransaction>(
     nextOccurrence: {
       type: Date,
       required: true,
-      index: true,
     },
     lastGeneratedDate: {
       type: Date,
@@ -88,7 +86,6 @@ const RecurringTransactionSchema = new Schema<IRecurringTransaction>(
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
     },
     metadata: {
       dayOfMonth: {
@@ -109,12 +106,12 @@ const RecurringTransactionSchema = new Schema<IRecurringTransaction>(
   }
 );
 
-// Compound indexes for efficient queries
-RecurringTransactionSchema.index({ userId: 1, isActive: 1 });
-RecurringTransactionSchema.index({ userId: 1, type: 1 });
-RecurringTransactionSchema.index({ nextOccurrence: 1, isActive: 1 }); // For cron job processing
-RecurringTransactionSchema.index({ userId: 1, accountId: 1 });
-RecurringTransactionSchema.index({ userId: 1, categoryId: 1 });
+// Optimized compound indexes for efficient queries and write performance
+// Primary user queries - covers userId + any filter combination + sorting
+RecurringTransactionSchema.index({ userId: 1, isActive: 1, nextOccurrence: 1 });
+
+// Cron job processing - critical for finding due transactions
+RecurringTransactionSchema.index({ isActive: 1, nextOccurrence: 1 });
 
 // Validation: endDate must be after startDate if provided
 RecurringTransactionSchema.pre('save', function () {

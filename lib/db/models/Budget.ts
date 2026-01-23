@@ -20,7 +20,6 @@ const BudgetSchema = new Schema<IBudget>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     name: {
       type: String,
@@ -66,10 +65,12 @@ const BudgetSchema = new Schema<IBudget>(
   }
 );
 
-// Indexes for efficient queries
-BudgetSchema.index({ userId: 1, isActive: 1 });
+// Optimized indexes for efficient queries
+// Primary queries with date range filtering for active budgets
+BudgetSchema.index({ userId: 1, isActive: 1, startDate: 1, endDate: 1 });
+
+// Category-specific budget queries
 BudgetSchema.index({ userId: 1, categoryId: 1 });
-BudgetSchema.index({ startDate: 1, endDate: 1 });
 
 // Validation: endDate must be after startDate
 BudgetSchema.pre('save', function () {

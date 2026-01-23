@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
 
   // Define route patterns
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
-  const isProtectedPage = 
+  const isProtectedPage =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/transactions') ||
     pathname.startsWith('/budgets') ||

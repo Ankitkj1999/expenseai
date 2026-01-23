@@ -6,6 +6,17 @@ import { tools } from '@/lib/services/aiService';
 import { getCurrencySymbol } from '@/lib/constants/currencies';
 import { z } from 'zod';
 
+// Validation schema for chat request
+const chatRequestSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string().min(1, 'Message content is required').max(10000, 'Message too long'),
+    })
+  ).min(1, 'At least one message is required').max(50, 'Too many messages in request'),
+  sessionId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid session ID format').optional(),
+});
+
 /**
  * POST /api/ai/chat
  * Main AI chat endpoint with tool calling using AWS Bedrock Claude
@@ -13,18 +24,31 @@ import { z } from 'zod';
 export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
   console.log('\n========== AI CHAT REQUEST START ==========');
   const body = await request.json();
-  const { messages, sessionId } = body;
+  
+  // Validate request body
+  const validation = chatRequestSchema.safeParse(body);
+  if (!validation.success) {
+    console.log('[AI Chat] ERROR: Validation failed', validation.error.issues);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Validation failed',
+        details: validation.error.issues,
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+  
+  const { messages, sessionId } = validation.data;
   
   console.log('[AI Chat] Request received');
   console.log('[AI Chat] userId:', request.userId);
   console.log('[AI Chat] sessionId:', sessionId);
-  console.log('[AI Chat] messages count:', messages?.length);
-  console.log('[AI Chat] last message:', messages?.[messages.length - 1]);
-
-  if (!messages || !Array.isArray(messages)) {
-    console.log('[AI Chat] ERROR: Invalid messages array');
-    return new Response('Messages array is required', { status: 400 });
-  }
+  console.log('[AI Chat] messages count:', messages.length);
+  console.log('[AI Chat] last message:', messages[messages.length - 1]);
 
   // Get user preferences for currency from middleware (no DB query needed)
   const userCurrency = request.user.preferences?.currency || 'USD';

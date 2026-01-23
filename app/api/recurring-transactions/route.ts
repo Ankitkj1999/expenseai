@@ -1,6 +1,26 @@
 import { withAuthAndDb, AuthenticatedRequest } from '@/lib/middleware/withAuthAndDb';
 import { ApiResponse } from '@/lib/utils/responses';
+import { validateRequest, CommonSchemas } from '@/lib/utils/validation';
 import * as recurringTransactionService from '@/lib/services/recurringTransactionService';
+import mongoose from 'mongoose';
+import { z } from 'zod';
+
+// Validation schemas
+const recurringTransactionCreateSchema = z.object({
+  type: z.enum(['expense', 'income']),
+  amount: z.number().positive('Amount must be positive').max(1000000000, 'Amount too large'),
+  description: z.string().min(1, 'Description is required').max(500, 'Description too long'),
+  accountId: CommonSchemas.objectId,
+  categoryId: CommonSchemas.objectId,
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  interval: z.number().int().min(1, 'Interval must be at least 1').max(365, 'Interval too large').default(1),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+}).refine(
+  (data) => !data.endDate || !data.startDate || new Date(data.endDate) > new Date(data.startDate),
+  { message: 'End date must be after start date', path: ['endDate'] }
+);
 
 /**
  * GET /api/recurring-transactions
@@ -21,13 +41,33 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   const accountId = searchParams.get('accountId');
   const categoryId = searchParams.get('categoryId');
   
+  // Validate type if provided
+  if (type && !['expense', 'income'].includes(type)) {
+    return ApiResponse.badRequest('Invalid type. Must be expense or income');
+  }
   if (type) filters.type = type;
-  // Fix: Check if parameter exists before converting to boolean
+  
+  // Validate isActive if provided
   if (isActive !== null && isActive !== undefined) {
+    if (!['true', 'false'].includes(isActive)) {
+      return ApiResponse.badRequest('Invalid isActive value. Must be true or false');
+    }
     filters.isActive = isActive === 'true';
   }
-  if (accountId) filters.accountId = accountId;
-  if (categoryId) filters.categoryId = categoryId;
+  
+  // Validate ObjectIds if provided
+  if (accountId) {
+    if (!/^[0-9a-fA-F]{24}$/.test(accountId)) {
+      return ApiResponse.badRequest('Invalid accountId format');
+    }
+    filters.accountId = accountId;
+  }
+  if (categoryId) {
+    if (!/^[0-9a-fA-F]{24}$/.test(categoryId)) {
+      return ApiResponse.badRequest('Invalid categoryId format');
+    }
+    filters.categoryId = categoryId;
+  }
   
   const recurringTransactions = await recurringTransactionService.getRecurringTransactions(
     request.userId,
@@ -47,40 +87,27 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
 export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
   const body = await request.json();
   
-  // Validate required fields
-  if (!body.type || !body.amount || !body.description || !body.accountId || !body.categoryId || !body.frequency) {
-    return ApiResponse.badRequest('Missing required fields');
+  // Validate request body
+  const validation = validateRequest(recurringTransactionCreateSchema, body);
+  if (!validation.success) {
+    return validation.response;
   }
   
-  if (!['expense', 'income'].includes(body.type)) {
-    return ApiResponse.badRequest('Type must be expense or income');
-  }
-  
-  if (!['daily', 'weekly', 'monthly', 'yearly'].includes(body.frequency)) {
-    return ApiResponse.badRequest('Invalid frequency');
-  }
-  
-  if (body.amount <= 0) {
-    return ApiResponse.badRequest('Amount must be greater than 0');
-  }
-  
-  if (body.interval && body.interval < 1) {
-    return ApiResponse.badRequest('Interval must be at least 1');
-  }
+  const data = validation.data;
   
   const recurringTransaction = await recurringTransactionService.createRecurringTransaction(
     request.userId,
     {
-      type: body.type,
-      amount: body.amount,
-      description: body.description,
-      accountId: body.accountId,
-      categoryId: body.categoryId,
-      frequency: body.frequency,
-      interval: body.interval || 1,
-      startDate: body.startDate ? new Date(body.startDate) : new Date(),
-      endDate: body.endDate ? new Date(body.endDate) : undefined,
-      metadata: body.metadata || {},
+      type: data.type,
+      amount: data.amount,
+      description: data.description,
+      accountId: new mongoose.Types.ObjectId(data.accountId),
+      categoryId: new mongoose.Types.ObjectId(data.categoryId),
+      frequency: data.frequency,
+      interval: data.interval,
+      startDate: data.startDate ? new Date(data.startDate) : new Date(),
+      endDate: data.endDate ? new Date(data.endDate) : undefined,
+      metadata: data.metadata,
     }
   );
   

@@ -192,18 +192,18 @@ export const ValidationSchemas = {
     create: z.object({
       name: z.string().min(1, 'Name is required').max(50, 'Name cannot exceed 50 characters'),
       type: CommonSchemas.accountType,
-      balance: z.number().default(0),
+      balance: z.number().min(-1000000000, 'Balance too low').max(1000000000, 'Balance too high').default(0),
       currency: z.string().length(3).default('INR'),
-      icon: z.string().optional(),
+      icon: z.string().max(50, 'Icon name too long').optional(),
       color: CommonSchemas.hexColor.optional(),
     }),
     
     update: z.object({
       name: z.string().min(1).max(50, 'Name cannot exceed 50 characters').optional(),
       type: CommonSchemas.accountType.optional(),
-      balance: z.number().optional(),
+      balance: z.number().min(-1000000000, 'Balance too low').max(1000000000, 'Balance too high').optional(),
       currency: z.string().length(3).optional(),
-      icon: z.string().optional(),
+      icon: z.string().max(50, 'Icon name too long').optional(),
       color: CommonSchemas.hexColor.optional(),
       isActive: z.boolean().optional(),
     }),
@@ -215,14 +215,14 @@ export const ValidationSchemas = {
   transaction: {
     create: z.object({
       type: CommonSchemas.transactionType,
-      amount: z.number().positive('Amount must be positive'),
+      amount: z.number().positive('Amount must be positive').max(1000000000, 'Amount too large'),
       description: z.string().min(1, 'Description is required').max(500),
       accountId: CommonSchemas.objectId,
       toAccountId: CommonSchemas.objectId.optional(),
       categoryId: CommonSchemas.objectId.optional(),
-      tags: z.array(z.string()).default([]),
+      tags: z.array(z.string().max(50, 'Tag too long')).max(20, 'Too many tags').default([]),
       date: z.string().datetime().optional(),
-      attachments: z.array(z.string()).default([]),
+      attachments: z.array(z.string().url('Invalid attachment URL').max(500, 'URL too long')).max(10, 'Too many attachments').default([]),
       aiGenerated: z.boolean().default(false),
       metadata: z.record(z.string(), z.unknown()).default({}),
     }).refine(
@@ -235,14 +235,14 @@ export const ValidationSchemas = {
     
     update: z.object({
       type: CommonSchemas.transactionType.optional(),
-      amount: z.number().positive().optional(),
+      amount: z.number().positive().max(1000000000, 'Amount too large').optional(),
       description: z.string().min(1).max(500).optional(),
       accountId: CommonSchemas.objectId.optional(),
       toAccountId: CommonSchemas.objectId.optional(),
       categoryId: CommonSchemas.objectId.optional(),
-      tags: z.array(z.string()).optional(),
+      tags: z.array(z.string().max(50, 'Tag too long')).max(20, 'Too many tags').optional(),
       date: z.string().datetime().optional(),
-      attachments: z.array(z.string()).optional(),
+      attachments: z.array(z.string().url('Invalid attachment URL').max(500, 'URL too long')).max(10, 'Too many attachments').optional(),
       aiGenerated: z.boolean().optional(),
       metadata: z.record(z.string(), z.unknown()).optional(),
     }),
@@ -254,7 +254,7 @@ export const ValidationSchemas = {
       startDate: z.string().optional(),
       endDate: z.string().optional(),
       limit: z.coerce.number().min(1).max(100).default(50),
-      skip: z.coerce.number().min(0).default(0),
+      skip: z.coerce.number().min(0).max(10000, 'Skip value too large').default(0),
     }),
   },
   
@@ -265,14 +265,14 @@ export const ValidationSchemas = {
     create: z.object({
       name: z.string().min(1, 'Name is required').max(50, 'Name cannot exceed 50 characters'),
       type: CommonSchemas.categoryType,
-      icon: z.string().default('category'),
+      icon: z.string().max(50, 'Icon name too long').default('category'),
       color: CommonSchemas.hexColor.default('#6B7280'),
     }),
     
     update: z.object({
       name: z.string().min(1).max(50, 'Name cannot exceed 50 characters').optional(),
       type: CommonSchemas.categoryType.optional(),
-      icon: z.string().optional(),
+      icon: z.string().max(50, 'Icon name too long').optional(),
       color: CommonSchemas.hexColor.optional(),
     }),
     
@@ -288,7 +288,7 @@ export const ValidationSchemas = {
     create: z.object({
       name: z.string().min(1, 'Name is required').max(100),
       categoryId: CommonSchemas.objectId.optional(),
-      amount: z.number().positive('Amount must be greater than 0'),
+      amount: z.number().positive('Amount must be greater than 0').max(1000000000, 'Amount too large'),
       period: CommonSchemas.budgetPeriod,
       startDate: z.string().datetime(),
       endDate: z.string().datetime(),
@@ -301,7 +301,7 @@ export const ValidationSchemas = {
     update: z.object({
       name: z.string().min(1).max(100).optional(),
       categoryId: CommonSchemas.objectId.optional(),
-      amount: z.number().positive().optional(),
+      amount: z.number().positive().max(1000000000, 'Amount too large').optional(),
       period: CommonSchemas.budgetPeriod.optional(),
       startDate: z.string().datetime().optional(),
       endDate: z.string().datetime().optional(),
