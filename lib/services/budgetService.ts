@@ -206,18 +206,110 @@ class BudgetService {
 
   /**
    * Get all active budgets with their status
+   * Uses single aggregation query to avoid N+1 problem
    */
   async getAllBudgetStatuses(userId: string): Promise<BudgetStatus[]> {
-    const budgets = await this.getBudgets(userId, { isActive: true });
+    const now = new Date();
     
-    const statuses = await Promise.all(
-      budgets.map(async (budget) => {
-        const status = await this.getBudgetStatus(budget._id.toString(), userId);
-        return status;
-      })
+    // Use aggregation pipeline to join budgets with their spending in a single query
+    const budgetStatuses = await Budget.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          isActive: true,
+          startDate: { $lte: now },
+          endDate: { $gte: now },
+        },
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryId',
+          foreignField: '_id',
+          as: 'category',
+        },
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'transactions',
+          let: {
+            budgetCategoryId: '$categoryId',
+            budgetStartDate: '$startDate',
+            budgetEndDate: '$endDate',
+            budgetUserId: '$userId'
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$userId', '$$budgetUserId'] },
+                    { $eq: ['$type', 'expense'] },
+                    { $gte: ['$date', '$$budgetStartDate'] },
+                    { $lte: ['$date', '$$budgetEndDate'] },
+                    {
+                      $cond: {
+                        if: { $ne: ['$$budgetCategoryId', null] },
+                        then: { $eq: ['$categoryId', '$$budgetCategoryId'] },
+                        else: true
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$amount' }
+              }
+            }
+          ],
+          as: 'spending',
+        },
+      },
+      {
+        $addFields: {
+          spent: {
+            $ifNull: [{ $arrayElemAt: ['$spending.total', 0] }, 0]
+          },
+        },
+      },
+    ]);
+
+    // Fetch actual budget documents and merge with spending data
+    const budgetIds = budgetStatuses.map(b => b._id);
+    const budgets = await Budget.find({ _id: { $in: budgetIds } })
+      .populate('categoryId', 'name icon color');
+
+    // Create a map for quick lookup
+    const spendingMap = new Map(
+      budgetStatuses.map(b => [b._id.toString(), b.spent])
     );
 
-    return statuses.filter((s): s is BudgetStatus => s !== null);
+    // Transform to BudgetStatus format
+    return budgets.map(budget => {
+      const spent = spendingMap.get(budget._id.toString()) || 0;
+      const remaining = budget.amount - spent;
+      const percentage = (spent / budget.amount) * 100;
+      const isOverBudget = spent > budget.amount;
+      const shouldAlert = percentage >= budget.alertThreshold;
+
+      return {
+        budget,
+        spent,
+        remaining,
+        percentage: Math.round(percentage * 100) / 100,
+        isOverBudget,
+        shouldAlert,
+      };
+    });
   }
 
   /**

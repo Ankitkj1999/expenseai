@@ -145,25 +145,32 @@ class AnalyticsService {
 
   /**
    * Get spending trends over time
+   * Limited to prevent unbounded results
    */
   async getTrends(userId: string, params: TrendsParams): Promise<TrendData[]> {
     const { period, groupBy = 'day' } = params;
     const dateRange = this.getDateRange(period);
 
-    // Determine grouping format
+    // Determine grouping format and max data points
     let dateFormat: string;
+    let maxDataPoints: number;
+    
     switch (groupBy) {
       case 'day':
         dateFormat = '%Y-%m-%d';
+        maxDataPoints = 365; // Max 1 year of daily data
         break;
       case 'week':
         dateFormat = '%Y-W%V';
+        maxDataPoints = 104; // Max 2 years of weekly data
         break;
       case 'month':
         dateFormat = '%Y-%m';
+        maxDataPoints = 60; // Max 5 years of monthly data
         break;
       default:
         dateFormat = '%Y-%m-%d';
+        maxDataPoints = 365;
     }
 
     const trends = await Transaction.aggregate([
@@ -187,6 +194,9 @@ class AnalyticsService {
       },
       {
         $sort: { '_id.date': 1 },
+      },
+      {
+        $limit: maxDataPoints * 2, // *2 to account for income + expense per date
       },
     ]);
 

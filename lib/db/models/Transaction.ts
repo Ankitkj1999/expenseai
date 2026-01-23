@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { TRANSACTION_TYPES } from '@/lib/constants/enums';
 
 export interface ITransaction extends Document {
   userId: mongoose.Types.ObjectId;
@@ -36,12 +37,12 @@ const TransactionSchema = new Schema<ITransaction>(
     type: {
       type: String,
       required: true,
-      enum: ['expense', 'income', 'transfer'],
+      enum: TRANSACTION_TYPES,
     },
     amount: {
       type: Number,
       required: true,
-      min: 0,
+      min: [0.01, 'Amount must be greater than 0'],
     },
     description: {
       type: String,
@@ -102,6 +103,11 @@ TransactionSchema.index({ userId: 1, date: -1 });
 TransactionSchema.index({ userId: 1, type: 1, date: -1 });
 TransactionSchema.index({ userId: 1, accountId: 1, date: -1 });
 TransactionSchema.index({ userId: 1, categoryId: 1, date: -1 });
+
+// Additional indexes for analytics and filtered queries
+TransactionSchema.index({ userId: 1, type: 1, categoryId: 1, date: -1 }); // Category breakdown analytics
+TransactionSchema.index({ userId: 1, accountId: 1, type: 1, date: -1 }); // Account-specific filtering
+TransactionSchema.index({ userId: 1, date: 1 }); // Ascending date queries for trends
 
 const Transaction: Model<ITransaction> =
   mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema);

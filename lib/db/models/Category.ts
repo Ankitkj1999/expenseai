@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { CATEGORY_TYPES } from '@/lib/constants/enums';
 
 export interface ICategory extends Document {
   userId: mongoose.Types.ObjectId | null;
@@ -28,7 +29,7 @@ const CategorySchema = new Schema<ICategory>(
     type: {
       type: String,
       required: true,
-      enum: ['expense', 'income'],
+      enum: CATEGORY_TYPES,
     },
     icon: {
       type: String,
@@ -37,6 +38,7 @@ const CategorySchema = new Schema<ICategory>(
     color: {
       type: String,
       default: '#6B7280',
+      match: [/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color format'],
     },
     isSystem: {
       type: Boolean,
@@ -52,6 +54,14 @@ const CategorySchema = new Schema<ICategory>(
 CategorySchema.index({ userId: 1, name: 1 }, { unique: true, sparse: true }); // Prevent duplicate names per user
 CategorySchema.index({ userId: 1, type: 1 });
 CategorySchema.index({ isSystem: 1, type: 1 });
+
+// Color normalization pre-save hook
+CategorySchema.pre('save', function(this: ICategory) {
+  if (this.isModified('color') && this.color) {
+    // Normalize to uppercase
+    this.color = this.color.toUpperCase();
+  }
+});
 
 const Category: Model<ICategory> =
   mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema);

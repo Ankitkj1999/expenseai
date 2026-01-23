@@ -3,10 +3,11 @@ import { z } from 'zod';
 import { withDb } from '@/lib/middleware/withAuthAndDb';
 import User from '@/lib/db/models/User';
 import { comparePassword, generateToken } from '@/lib/utils/auth';
+import { CommonSchemas } from '@/lib/utils/validation';
 
 // Validation schema
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: CommonSchemas.email,
   password: z.string().min(1, 'Password is required'),
 });
 

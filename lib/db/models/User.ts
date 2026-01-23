@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { CURRENCY_CODES } from '@/lib/constants/currencies';
 import { DATE_FORMAT_VALUES } from '@/lib/constants/dateFormats';
+import { THEME_OPTIONS } from '@/lib/constants/enums';
 
 export interface IUserPreferences {
   currency: string;
@@ -33,7 +34,7 @@ const UserSchema = new Schema<IUser>(
       unique: true, // Ensures uniqueness at database level
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+      match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Please provide a valid email address'],
     },
     name: {
       type: String,
@@ -60,7 +61,7 @@ const UserSchema = new Schema<IUser>(
       theme: {
         type: String,
         default: 'light',
-        enum: ['light', 'dark'],
+        enum: THEME_OPTIONS,
       },
       notifications: {
         budgetAlerts: {
@@ -90,6 +91,21 @@ const UserSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
+
+// Email validation and normalization pre-save hook
+UserSchema.pre('save', function(this: IUser) {
+  if (this.isModified('email')) {
+    // Additional validation
+    if (this.email.includes('..')) {
+      throw new Error('Email cannot contain consecutive dots');
+    }
+    if (this.email.startsWith('.') || this.email.endsWith('.')) {
+      throw new Error('Email cannot start or end with a dot');
+    }
+    // Normalize email (already handled by schema lowercase/trim, but explicit here)
+    this.email = this.email.toLowerCase().trim();
+  }
+});
 
 // Prevent model recompilation in development
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

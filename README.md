@@ -102,6 +102,18 @@ expenseai/
 
 For detailed folder structure documentation, see [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 
+## Security
+
+ExpenseAI implements comprehensive security measures including:
+- Strong password requirements (12+ characters with complexity)
+- NoSQL injection prevention
+- Request size limits to prevent DoS attacks
+- Security headers (CSP, HSTS, X-Frame-Options, etc.)
+- JWT authentication with HTTP-only cookies
+- Input validation and sanitization
+
+For detailed security documentation, see [docs/SECURITY.md](docs/SECURITY.md).
+
 ## License
 
 MIT

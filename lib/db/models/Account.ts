@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { CURRENCY_CODES } from '@/lib/constants/currencies';
+import { ACCOUNT_TYPES } from '@/lib/constants/enums';
 
 export interface IAccount extends Document {
   userId: mongoose.Types.ObjectId;
@@ -32,7 +33,7 @@ const AccountSchema = new Schema<IAccount>(
     type: {
       type: String,
       required: true,
-      enum: ['cash', 'bank', 'credit', 'wallet', 'savings'],
+      enum: ACCOUNT_TYPES,
     },
     balance: {
       type: Number,
@@ -67,6 +68,14 @@ const AccountSchema = new Schema<IAccount>(
 
 // Index for efficient queries
 AccountSchema.index({ userId: 1, isActive: 1 });
+
+// Color normalization pre-save hook
+AccountSchema.pre('save', function(this: IAccount) {
+  if (this.isModified('color') && this.color) {
+    // Normalize to uppercase
+    this.color = this.color.toUpperCase();
+  }
+});
 
 const Account: Model<IAccount> =
   mongoose.models.Account || mongoose.model<IAccount>('Account', AccountSchema);

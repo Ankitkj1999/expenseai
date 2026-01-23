@@ -11,14 +11,15 @@ export const GET = withAuthAndDb(async (
 ) => {
   const { id } = await context!.params;
   
-  // Find transaction
+  // Find transaction with all populates in a single call
   const transaction = await Transaction.findOne({
     _id: id,
     userId: request.userId,
-  })
-    .populate('accountId', 'name type icon color')
-    .populate('toAccountId', 'name type icon color')
-    .populate('categoryId', 'name icon color');
+  }).populate([
+    { path: 'accountId', select: 'name type icon color' },
+    { path: 'toAccountId', select: 'name type icon color' },
+    { path: 'categoryId', select: 'name icon color' }
+  ]);
   
   if (!transaction) return ApiResponse.notFound('Transaction');
   
@@ -56,14 +57,12 @@ export const PUT = withAuthAndDb(async (
   // Update transaction with balance adjustments
   const transaction = await updateTransaction(request.userId, id, updates);
   
-  // Populate references
-  await transaction.populate('accountId', 'name type icon color');
-  if (transaction.toAccountId) {
-    await transaction.populate('toAccountId', 'name type icon color');
-  }
-  if (transaction.categoryId) {
-    await transaction.populate('categoryId', 'name icon color');
-  }
+  // Populate all references in a single call using array syntax
+  await transaction.populate([
+    { path: 'accountId', select: 'name type icon color' },
+    { path: 'toAccountId', select: 'name type icon color' },
+    { path: 'categoryId', select: 'name icon color' }
+  ]);
   
   return ApiResponse.successWithMessage({ transaction }, 'Transaction updated successfully');
 });

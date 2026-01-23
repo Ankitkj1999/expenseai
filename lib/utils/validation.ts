@@ -1,7 +1,14 @@
 import { z } from 'zod';
 import { ApiResponse } from './responses';
+import { sanitizeInput } from './sanitize';
 import type { NextResponse } from 'next/server';
 import type { ApiErrorResponse } from './responses';
+import {
+  ACCOUNT_TYPES,
+  TRANSACTION_TYPES,
+  CATEGORY_TYPES,
+  BUDGET_PERIODS,
+} from '@/lib/constants/enums';
 
 /**
  * Validation result types
@@ -35,27 +42,40 @@ export function validateRequest<T>(
   schema: z.ZodSchema<T>,
   data: unknown
 ): ValidationResult<T> {
-  const result = schema.safeParse(data);
-  
-  if (!result.success) {
-    const errors = result.error.issues.map((err: z.ZodIssue) => ({
-      field: err.path.join('.'),
-      message: err.message,
-    }));
+  // First, sanitize the input to prevent NoSQL injection
+  try {
+    const sanitizedData = sanitizeInput(data);
+    const result = schema.safeParse(sanitizedData);
     
+    if (!result.success) {
+      const errors = result.error.issues.map((err: z.ZodIssue) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      
+      return {
+        success: false,
+        response: ApiResponse.badRequest(
+          errors[0].message,
+          errors
+        ),
+      };
+    }
+    
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    // Handle sanitization errors
     return {
       success: false,
       response: ApiResponse.badRequest(
-        errors[0].message,
-        errors
+        error instanceof Error ? error.message : 'Invalid input detected',
+        []
       ),
     };
   }
-  
-  return {
-    success: true,
-    data: result.data,
-  };
 }
 
 /**
@@ -91,6 +111,38 @@ export const CommonSchemas = {
   objectId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format'),
   
   /**
+   * Email validation with comprehensive rules
+   */
+  email: z.string()
+    .min(1, 'Email is required')
+    .email('Please provide a valid email address')
+    .toLowerCase()
+    .trim()
+    .max(255, 'Email cannot exceed 255 characters'),
+  
+  /**
+   * Strong password validation
+   * - Minimum 12 characters
+   * - At least one uppercase letter
+   * - At least one lowercase letter
+   * - At least one number
+   * - At least one special character
+   */
+  password: z.string()
+    .min(12, 'Password must be at least 12 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  
+  /**
+   * Hex color validation
+   */
+  hexColor: z.string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color format')
+    .transform(val => val.toUpperCase()),
+  
+  /**
    * Pagination parameters
    */
   pagination: z.object({
@@ -109,22 +161,22 @@ export const CommonSchemas = {
   /**
    * Transaction type enum
    */
-  transactionType: z.enum(['expense', 'income', 'transfer']),
+  transactionType: z.enum(TRANSACTION_TYPES),
   
   /**
    * Budget period enum
    */
-  budgetPeriod: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  budgetPeriod: z.enum(BUDGET_PERIODS),
   
   /**
    * Account type enum
    */
-  accountType: z.enum(['cash', 'bank', 'credit', 'wallet', 'savings']),
+  accountType: z.enum(ACCOUNT_TYPES),
   
   /**
    * Category type enum
    */
-  categoryType: z.enum(['expense', 'income']),
+  categoryType: z.enum(CATEGORY_TYPES),
 };
 
 /**
@@ -136,21 +188,21 @@ export const ValidationSchemas = {
    */
   account: {
     create: z.object({
-      name: z.string().min(1, 'Name is required').max(100),
+      name: z.string().min(1, 'Name is required').max(50, 'Name cannot exceed 50 characters'),
       type: CommonSchemas.accountType,
       balance: z.number().default(0),
       currency: z.string().length(3).default('INR'),
       icon: z.string().optional(),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      color: CommonSchemas.hexColor.optional(),
     }),
     
     update: z.object({
-      name: z.string().min(1).max(100).optional(),
+      name: z.string().min(1).max(50, 'Name cannot exceed 50 characters').optional(),
       type: CommonSchemas.accountType.optional(),
       balance: z.number().optional(),
       currency: z.string().length(3).optional(),
       icon: z.string().optional(),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      color: CommonSchemas.hexColor.optional(),
       isActive: z.boolean().optional(),
     }),
   },
@@ -209,17 +261,17 @@ export const ValidationSchemas = {
    */
   category: {
     create: z.object({
-      name: z.string().min(1, 'Name is required').max(100),
+      name: z.string().min(1, 'Name is required').max(50, 'Name cannot exceed 50 characters'),
       type: CommonSchemas.categoryType,
       icon: z.string().default('category'),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#6B7280'),
+      color: CommonSchemas.hexColor.default('#6B7280'),
     }),
     
     update: z.object({
-      name: z.string().min(1).max(100).optional(),
+      name: z.string().min(1).max(50, 'Name cannot exceed 50 characters').optional(),
       type: CommonSchemas.categoryType.optional(),
       icon: z.string().optional(),
-      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      color: CommonSchemas.hexColor.optional(),
     }),
     
     query: z.object({
