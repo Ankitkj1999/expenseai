@@ -31,8 +31,14 @@ interface TransactionListProps {
 export function TransactionList({ transactions, count, currency }: TransactionListProps) {
   if (!transactions.length) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-center text-muted-foreground">
-        No transactions found for the selected period.
+      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+        <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
+          <h3 className="font-semibold">Recent Transactions</h3>
+          <span className="text-xs text-muted-foreground">0 found</span>
+        </div>
+        <div className="p-6 text-center text-muted-foreground">
+          No transactions found for the selected period.
+        </div>
       </div>
     );
   }

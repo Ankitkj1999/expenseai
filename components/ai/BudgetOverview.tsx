@@ -28,8 +28,14 @@ interface BudgetOverviewProps {
 export function BudgetOverview({ budgets, count, currency }: BudgetOverviewProps) {
   if (!budgets.length) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-center text-muted-foreground">
-        No active budgets found. You can set up a budget to track your spending.
+      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+        <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
+          <h3 className="font-semibold">Budget Status</h3>
+          <span className="text-xs text-muted-foreground">0 found</span>
+        </div>
+        <div className="p-6 text-center text-muted-foreground">
+          No active budgets found. You can set up a budget to track your spending.
+        </div>
       </div>
     );
   }
@@ -43,14 +49,14 @@ export function BudgetOverview({ budgets, count, currency }: BudgetOverviewProps
       <div className="p-4 space-y-5 max-h-[300px] overflow-y-auto">
         {budgets.map((item, index) => (
           <div key={index} className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{item.budget.name}</span>
+            <div className="flex justify-between items-center text-sm gap-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-medium truncate" title={item.budget.name}>{item.budget.name}</span>
                 {item.isOverBudget && (
-                  <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
                 )}
               </div>
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground shrink-0 whitespace-nowrap">
                 {currency}{item.spent.toLocaleString()} / {currency}{item.budget.amount.toLocaleString()}
               </span>
             </div>

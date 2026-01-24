@@ -244,6 +244,7 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
             return {
               accounts: result.accounts,
               count: result.count,
+              currency: currencySymbol,
             };
           }
           return result;
