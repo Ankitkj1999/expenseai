@@ -1,5 +1,7 @@
 'use client';
 
+import { AIComponentCard } from './AIComponentCard';
+
 import { Wallet, CreditCard, Building } from 'lucide-react';
 
 interface Account {
@@ -17,62 +19,51 @@ interface AccountsCardProps {
 }
 
 export function AccountsCard({ accounts, count, currency }: AccountsCardProps) {
-  if (!accounts.length) {
-    return (
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
-          <h3 className="font-semibold">Your Accounts</h3>
-          <span className="text-xs text-muted-foreground">0 found</span>
-        </div>
-        <div className="p-6 text-center text-muted-foreground">
-          No accounts found.
-        </div>
-      </div>
-    );
-  }
+  const totalBalance = accounts.reduce((acc, curr) => acc + curr.balance, 0);
 
   const getIcon = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'bank': return <Building className="h-5 w-5" />;
-      case 'card': return <CreditCard className="h-5 w-5" />;
-      case 'wallet': return <Wallet className="h-5 w-5" />;
-      default: return <Wallet className="h-5 w-5" />;
+      case 'bank': return <Building className="h-4 w-4" />;
+      case 'card': return <CreditCard className="h-4 w-4" />;
+      case 'wallet': return <Wallet className="h-4 w-4" />;
+      default: return <Wallet className="h-4 w-4" />;
     }
   };
 
-  const totalBalance = accounts.reduce((acc, curr) => acc + curr.balance, 0);
-
   return (
-    <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
-        <h3 className="font-semibold">Your Accounts</h3>
-        <span className="text-xs text-muted-foreground">{count} found</span>
-      </div>
-      
-      {/* Total Balance Header */}
-      <div className="p-4 bg-primary/5 border-b">
-        <p className="text-sm text-muted-foreground">Total Balance</p>
-        <p className="text-2xl font-bold">{currency}{totalBalance.toLocaleString()}</p>
+    <AIComponentCard
+      title="Your Accounts"
+      subtitle={`${count} accounts`}
+      isEmpty={accounts.length === 0}
+      emptyMessage="No accounts found."
+    >
+      <div className="bg-primary/5 p-4 flex flex-col items-center justify-center border-b border-primary/10">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Net Worth</p>
+        <p className="text-3xl font-bold tracking-tight text-primary">
+          {currency}{totalBalance.toLocaleString()}
+        </p>
       </div>
 
-      <div className="divide-y max-h-[300px] overflow-y-auto">
+      <div className="divide-y max-h-[320px] overflow-y-auto">
         {accounts.map((account) => (
-          <div key={account.id} className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between gap-4">
+          <div key={account.id} className="p-4 hover:bg-muted/40 transition-colors flex items-center justify-between gap-4 group">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 {getIcon(account.type)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm truncate" title={account.name}>{account.name}</p>
+                <p className="font-medium text-sm truncate text-foreground group-hover:text-primary transition-colors" title={account.name}>
+                  {account.name}
+                </p>
                 <p className="text-xs text-muted-foreground capitalize">{account.type}</p>
               </div>
             </div>
-            <div className="font-semibold shrink-0">
+            <div className="font-semibold shrink-0 text-sm tabular-nums">
               {currency}{account.balance.toLocaleString()}
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </AIComponentCard>
   );
 }

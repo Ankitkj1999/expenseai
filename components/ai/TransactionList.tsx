@@ -1,5 +1,7 @@
 'use client';
 
+import { AIComponentCard } from './AIComponentCard';
+
 import { format } from 'date-fns';
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft } from 'lucide-react';
 
@@ -29,55 +31,45 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ transactions, count, currency }: TransactionListProps) {
-  if (!transactions.length) {
-    return (
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
-          <h3 className="font-semibold">Recent Transactions</h3>
-          <span className="text-xs text-muted-foreground">0 found</span>
-        </div>
-        <div className="p-6 text-center text-muted-foreground">
-          No transactions found for the selected period.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
-        <h3 className="font-semibold">Recent Transactions</h3>
-        <span className="text-xs text-muted-foreground">{count} found</span>
-      </div>
-      <div className="divide-y max-h-[300px] overflow-y-auto">
+    <AIComponentCard
+      title="Recent Transactions"
+      subtitle={`${count} found`}
+      isEmpty={transactions.length === 0}
+      emptyMessage="No transactions found for the selected period."
+    >
+      <div className="divide-y max-h-[320px] overflow-y-auto">
         {transactions.map((transaction) => {
           const isExpense = transaction.type === 'expense';
           const isIncome = transaction.type === 'income';
           
           return (
-            <div key={transaction.id} className="p-3 hover:bg-muted/50 transition-colors flex items-center justify-between gap-3">
+            <div key={transaction.id} className="p-4 hover:bg-muted/40 transition-colors flex items-center justify-between gap-3 group">
               <div className="flex items-center gap-3 overflow-hidden">
                 <div className={`
-                  w-8 h-8 rounded-full flex items-center justify-center shrink-0
-                  ${isExpense ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 
-                    isIncome ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400' : 
-                    'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'}
+                  w-9 h-9 rounded-full flex items-center justify-center shrink-0 border
+                  ${isExpense ? 'bg-red-50 border-red-100 text-red-600 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-400' : 
+                    isIncome ? 'bg-green-50 border-green-100 text-green-600 dark:bg-green-950/20 dark:border-green-900/40 dark:text-green-400' : 
+                    'bg-blue-50 border-blue-100 text-blue-600 dark:bg-blue-950/20 dark:border-blue-900/40 dark:text-blue-400'}
                 `}>
                   {isExpense ? <ArrowUpRight className="h-4 w-4" /> : 
                    isIncome ? <ArrowDownLeft className="h-4 w-4" /> : 
                    <ArrowRightLeft className="h-4 w-4" />}
                 </div>
                 
-                <div className="min-w-0">
-                  <p className="font-medium text-sm truncate">{transaction.description}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {format(new Date(transaction.date), 'MMM d, yyyy')} • 
-                    {transaction.category?.name || 'Uncategorized'}
+                <div className="min-w-0 flex flex-col gap-0.5">
+                  <p className="font-medium text-sm truncate text-foreground group-hover:text-primary transition-colors">
+                    {transaction.description}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+                    <span>{format(new Date(transaction.date), 'MMM d, yyyy')}</span>
+                    <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50" />
+                    <span className="font-medium">{transaction.category?.name || 'Uncategorized'}</span>
                   </p>
                 </div>
               </div>
               
-              <div className={`font-semibold text-sm whitespace-nowrap ${
+              <div className={`font-semibold text-sm whitespace-nowrap tabular-nums ${
                 isExpense ? 'text-red-600 dark:text-red-400' : 
                 isIncome ? 'text-green-600 dark:text-green-400' : 
                 'text-blue-600 dark:text-blue-400'
@@ -88,6 +80,6 @@ export function TransactionList({ transactions, count, currency }: TransactionLi
           );
         })}
       </div>
-    </div>
+    </AIComponentCard>
   );
 }
