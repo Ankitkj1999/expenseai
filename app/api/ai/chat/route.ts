@@ -93,6 +93,14 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           console.log('[AI Chat] Executing getTransactions tool');
           const result = await tools.getTransactions.execute(params, request.userId);
           console.log('[AI Chat] getTransactions completed successfully');
+
+          if (result.success && result.transactions) {
+            return {
+              transactions: result.transactions,
+              count: result.count,
+              currency: currencySymbol,
+            };
+          }
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in getTransactions:', error);
@@ -197,6 +205,25 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           console.log('[AI Chat] Executing getBudgetStatus tool');
           const result = await tools.getBudgetStatus.execute(params, request.userId);
           console.log('[AI Chat] getBudgetStatus completed successfully');
+
+          if (result.success) {
+            // If it returned a list of budgets (no budgetId param)
+            if (result.budgets) {
+              return {
+                budgets: result.budgets,
+                count: result.count,
+                currency: currencySymbol,
+              };
+            }
+            // If it returned a single budget (budgetId param)
+            if (result.status) {
+              return {
+                budgets: [result.status],
+                count: 1,
+                currency: currencySymbol,
+              };
+            }
+          }
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in getBudgetStatus:', error);
@@ -212,6 +239,13 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           console.log('[AI Chat] Executing getAccounts tool');
           const result = await tools.getAccounts.execute(params, request.userId);
           console.log('[AI Chat] getAccounts completed successfully');
+
+          if (result.success && result.accounts) {
+            return {
+              accounts: result.accounts,
+              count: result.count,
+            };
+          }
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in getAccounts:', error);

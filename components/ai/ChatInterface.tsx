@@ -16,6 +16,9 @@ import { Sparkles, Loader2, History, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SpendingSummary } from './SpendingSummary';
 import { CategoryBreakdown } from './CategoryBreakdown';
+import { TransactionList } from './TransactionList';
+import { BudgetOverview } from './BudgetOverview';
+import { AccountsCard } from './AccountsCard';
 
 interface ToolInvocation {
   toolCallId: string;
@@ -345,17 +348,45 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                             
                             {/* Render tool results */}
                             {message.toolInvocations?.map((tool, index) => {
+                              // Spending Summary
                               if (tool.toolName === 'getSpendingSummary' && tool.state === 'result' && tool.result) {
                                 return <SpendingSummary key={index} {...(tool.result as any)} />;
                               }
+                              
+                              // Category Breakdown
                               if (tool.toolName === 'getCategoryBreakdown' && tool.state === 'result' && tool.result) {
                                 return <CategoryBreakdown key={index} {...(tool.result as any)} />;
                               }
+                              
+                              // Transaction List
+                              if (tool.toolName === 'getTransactions' && tool.state === 'result' && tool.result) {
+                                return <TransactionList key={index} {...(tool.result as any)} />;
+                              }
+                              
+                              // Budget Overview
+                              if (tool.toolName === 'getBudgetStatus' && tool.state === 'result' && tool.result) {
+                                return <BudgetOverview key={index} {...(tool.result as any)} />;
+                              }
+                              
+                              // Accounts Card
+                              if (tool.toolName === 'getAccounts' && tool.state === 'result' && tool.result) {
+                                return <AccountsCard key={index} {...(tool.result as any)} />;
+                              }
+                              
+                              // Loading state
                               if (tool.state === 'call') {
                                 return (
-                                  <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground my-2 p-2 bg-muted/20 rounded-md">
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    Loading {tool.toolName}...
+                                    <span>
+                                      {tool.toolName === 'getSpendingSummary' && 'Calculating spending summary...'}
+                                      {tool.toolName === 'getCategoryBreakdown' && 'Analyzing spending categories...'}
+                                      {tool.toolName === 'getTransactions' && 'Fetching transactions...'}
+                                      {tool.toolName === 'getBudgetStatus' && 'Checking budget status...'}
+                                      {tool.toolName === 'getAccounts' && 'Retrieving account details...'}
+                                      {tool.toolName === 'createTransaction' && 'Creating transaction...'}
+                                      {!['getSpendingSummary', 'getCategoryBreakdown', 'getTransactions', 'getBudgetStatus', 'getAccounts', 'createTransaction'].includes(tool.toolName) && `Using ${tool.toolName}...`}
+                                    </span>
                                   </div>
                                 );
                               }
