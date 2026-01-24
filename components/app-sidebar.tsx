@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import {
-  IconBrain,
   IconLayoutDashboard,
   IconReceipt,
   IconWallet,
@@ -12,6 +11,7 @@ import {
   IconSettings,
 } from "@tabler/icons-react"
 
+import { Logo } from "@/components/Logo"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -87,7 +87,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="/dashboard">
-                <IconBrain className="!size-5 text-primary" />
+                <div className="relative">
+                  <Logo className="!size-5" />
+                  <div className="absolute inset-0 blur-xl bg-primary/30 group-hover:bg-primary/50 transition-all" />
+                </div>
                 <span className="text-base font-semibold">ExpenseAI</span>
               </a>
             </SidebarMenuButton>

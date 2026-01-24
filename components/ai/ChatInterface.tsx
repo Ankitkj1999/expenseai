@@ -8,24 +8,27 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { ChatHistory } from './ChatHistory';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, History, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { componentRegistry, getLoadingText } from './registry';
 
-interface ToolCall {
-  name: string;
-  status: 'pending' | 'completed' | 'error';
+interface ToolInvocation {
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
+  state: 'call' | 'result' | 'error';
+  result?: unknown;
 }
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolCalls?: ToolCall[];
+  toolInvocations?: ToolInvocation[];
 }
 
 interface ChatInterfaceProps {
@@ -40,8 +43,57 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Ref to track if session ID update is from new chat creation to avoid reloading
+  const isCreatingSessionRef = useRef(false);
 
-  // Auto-scroll to bottom when new messages arrive with smooth behavior
+
+  // Load session history when sessionId changes
+  useEffect(() => {
+    if (sessionId && !isCreatingSessionRef.current) {
+      loadSessionMessages(sessionId);
+    }
+    // Reset the ref after checking
+    if (isCreatingSessionRef.current) {
+      isCreatingSessionRef.current = false;
+    }
+  }, [sessionId]);
+
+  const loadSessionMessages = async (id: string) => {
+    setIsLoading(true);
+    // Clear messages while loading to avoid confusion
+    setMessages([]); 
+    try {
+      const response = await fetch(`/api/ai/chat?sessionId=${id}`);
+      if (!response.ok) throw new Error('Failed to load session');
+      
+      const data = await response.json();
+      if (data.success && data.session) {
+        // Map DB messages to UI messages
+        const loadedMessages: Message[] = data.session.messages.map((m: any, index: number) => ({
+          id: m._id || `${id}-${index}`,
+          role: m.role,
+          content: m.content,
+          // Note: Tool invocations are not currently fully persisted in DB for history
+          // We map basics here if they exist in future
+          toolInvocations: m.toolCalls ? m.toolCalls.map((tc: any) => ({
+             state: 'result',
+             toolCallId: tc._id || `tool-${index}`,
+             toolName: tc.toolName,
+             args: tc.arguments,
+             result: tc.result
+          })) : undefined
+        }));
+        setMessages(loadedMessages);
+      }
+    } catch (err) {
+      console.error('Error loading session:', err);
+      setError('Failed to load conversation history');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
@@ -50,32 +102,6 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
       });
     }
   }, [messages]);
-
-  // Load session if sessionId exists
-  useEffect(() => {
-    if (sessionId && open) {
-      loadSession(sessionId);
-    }
-  }, [sessionId, open]);
-
-  const loadSession = async (id: string) => {
-    try {
-      const response = await fetch(`/api/ai/chat?sessionId=${id}`);
-      if (!response.ok) throw new Error('Failed to load session');
-      
-      const data = await response.json();
-      if (data.success && data.session) {
-        const loadedMessages: Message[] = data.session.messages.map((msg: { role: 'user' | 'assistant'; content: string }, index: number) => ({
-          id: `${id}-${index}`,
-          role: msg.role,
-          content: msg.content,
-        }));
-        setMessages(loadedMessages);
-      }
-    } catch (error) {
-      console.error('Error loading session:', error);
-    }
-  };
 
   const handleSend = async (input: string) => {
     if (!input.trim() || isLoading) return;
@@ -90,9 +116,6 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
     setIsLoading(true);
     setError(null);
 
-    // Simulate tool calls (in real implementation, these would come from the API)
-    const mockToolCalls: ToolCall[] = [];
-    
     try {
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -112,25 +135,84 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to get response');
+      if (!response.body) {
+        throw new Error('No response body');
       }
 
-      // Update session ID if new session was created
-      if (data.sessionId && !sessionId) {
-        setSessionId(data.sessionId);
+      // Check for new session ID in headers
+      const newSessionId = response.headers.get('X-Session-Id');
+      if (newSessionId && newSessionId !== sessionId) {
+        isCreatingSessionRef.current = true;
+        setSessionId(newSessionId);
       }
 
-      const assistantMessage: Message = {
+      // Handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.message || 'No response received',
-        toolCalls: mockToolCalls.length > 0 ? mockToolCalls : undefined,
+        content: '',
+        toolInvocations: [],
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              // Handle different message types from the stream
+              if (data.type === 'text-delta') {
+                assistantMessage.content += data.delta;
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1] = { ...assistantMessage };
+                  return newMessages;
+                });
+              } else if (data.type === 'tool-input-available') {
+                // Tool is being called
+                const toolInvocation: ToolInvocation = {
+                  toolCallId: data.toolCallId,
+                  toolName: data.toolName,
+                  args: data.input,
+                  state: 'call',
+                };
+                assistantMessage.toolInvocations = assistantMessage.toolInvocations || [];
+                assistantMessage.toolInvocations.push(toolInvocation);
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1] = { ...assistantMessage };
+                  return newMessages;
+                });
+              } else if (data.type === 'tool-output-available') {
+                // Tool result is available
+                const invocations = assistantMessage.toolInvocations || [];
+                const invocation = invocations.find(inv => inv.toolCallId === data.toolCallId);
+                if (invocation) {
+                  invocation.state = 'result';
+                  invocation.result = data.output;
+                  setMessages((prev) => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = { ...assistantMessage };
+                    return newMessages;
+                  });
+                }
+              }
+            } catch (e) {
+              // Ignore JSON parse errors for incomplete chunks
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -160,8 +242,13 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
   };
 
   const handleSelectSession = (id: string) => {
-    setSessionId(id);
-    setShowHistory(false);
+    // Only update if it's a different session
+    if (id !== sessionId) {
+      setSessionId(id);
+      setShowHistory(false);
+    } else {
+      setShowHistory(false);
+    }
   };
 
   const handleNewChat = () => {
@@ -206,10 +293,9 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
         </SheetHeader>
 
         <div className="flex flex-1 overflow-hidden relative">
-          {/* Chat History Sidebar - Full width overlay on mobile, sidebar on desktop */}
+          {/* Chat History Sidebar */}
           {showHistory && (
             <>
-              {/* Backdrop for mobile */}
               <div
                 className={cn(
                   "absolute inset-0 bg-background/80 backdrop-blur-sm z-10 md:hidden",
@@ -218,7 +304,6 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                 onClick={() => setShowHistory(false)}
               />
               
-              {/* Sidebar */}
               <div className={cn(
                 "absolute inset-y-0 left-0 w-full sm:w-80 md:relative md:w-80 lg:w-96",
                 "border-r shrink-0 z-20 bg-background",
@@ -240,20 +325,24 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
               ref={scrollRef}
               className="flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
             >
-              {messages.length === 0 ? (
+              {isLoading && messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-2">
                   <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted mb-3 sm:mb-4">
                     <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
                   </div>
                   <h3 className="text-base sm:text-lg font-medium mb-2">Start a conversation</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mb-4 sm:mb-6">
-                    I can help you track expenses, analyze spending, check budgets, and more.
+                    I can help you track expenses, analyze spending, and show you visual summaries.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center max-w-md">
                     <Badge
                       variant="outline"
                       className={cn(
-                        "cursor-pointer transition-all duration-200",
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
@@ -264,7 +353,18 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "cursor-pointer transition-all duration-200",
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
+                      onClick={() => handleSend("Show spending by category")}
+                    >
+                      Category breakdown
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
@@ -275,32 +375,93 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "cursor-pointer transition-all duration-200",
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
-                      onClick={() => handleSend("I spent $50 on lunch")}
+                      onClick={() => handleSend("Show my recent transactions")}
                     >
-                      Log expense
+                      Recent transactions
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
+                      onClick={() => handleSend("List my accounts")}
+                    >
+                      My accounts
                     </Badge>
                   </div>
                 </div>
               ) : (
                 <>
-                  {messages.map((message, index) => (
-                    <ChatMessage
+                  {messages.map((message) => (
+                    <div
                       key={message.id}
-                      role={message.role}
-                      content={message.content}
-                      toolCalls={message.toolCalls}
-                      isStreaming={isLoading && index === messages.length - 1}
-                      onRegenerate={
-                        message.role === 'assistant' && index === messages.length - 1
-                          ? handleRegenerate
-                          : undefined
-                      }
-                    />
+                      className={cn(
+                        "flex gap-3 mb-4",
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                          <Sparkles className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
+
+                      <div className={cn(
+                        "flex flex-col gap-2 max-w-[80%]",
+                        message.role === 'user' ? 'items-end' : 'items-start'
+                      )}>
+                        {message.role === 'user' ? (
+                          <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                            {message.content}
+                          </div>
+                        ) : (
+                          <>
+                            {/* Render text content */}
+                            {message.content && (
+                              <div className="prose prose-sm max-w-none dark:prose-invert">
+                                <p className="whitespace-pre-wrap">{message.content}</p>
+                              </div>
+                            )}
+                            
+                            {/* Render tool results */}
+                            {message.toolInvocations?.map((tool, index) => {
+                              const registryItem = componentRegistry[tool.toolName];
+                              
+                              // Check if we have a component for this tool and we have a result
+                              if (registryItem && tool.state === 'result' && tool.result) {
+                                const Component = registryItem.component;
+                                return <Component key={index} {...(tool.result as any)} />;
+                              }
+                              
+                              // Loading state
+                              if (tool.state === 'call') {
+                                return (
+                                  <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground my-2 p-2 bg-muted/20 rounded-md">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>{getLoadingText(tool.toolName)}</span>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })}
+                          </>
+                        )}
+                      </div>
+
+                      {message.role === 'user' && (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                          <span className="text-sm font-medium">You</span>
+                        </div>
+                      )}
+                    </div>
                   ))}
+
                   {isLoading && messages[messages.length - 1]?.role === 'user' && (
                     <div className="flex gap-3 mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">

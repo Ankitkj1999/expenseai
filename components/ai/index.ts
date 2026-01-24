@@ -2,3 +2,8 @@ export { ChatInterface } from './ChatInterface';
 export { ChatMessage } from './ChatMessage';
 export { ChatInput } from './ChatInput';
 export { ChatHistory } from './ChatHistory';
+export { SpendingSummary } from './SpendingSummary';
+export { CategoryBreakdown } from './CategoryBreakdown';
+export { TransactionList } from './TransactionList';
+export { BudgetOverview } from './BudgetOverview';
+export { AccountsCard } from './AccountsCard';
