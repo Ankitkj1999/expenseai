@@ -47,6 +47,7 @@ The system transforms AI tool outputs into rich, interactive React components in
 
 ## Technical Implementation
 
+- **Unified Interface**: The chat interface now features quick-start buttons for all generative tools (Spending, Categories, Budgets, Transactions, Accounts), making visual insights instantly accessible.
 - **Component Registry**: Centralized management in `components/ai/registry.tsx`. Maps tool names to React components, making the system highly scalable.
 - **Streaming Architecture**: Uses Vercel AI SDK `streamText` with custom logic to parse `tool-input-available` and `tool-output-available` events.
 - **Client-Side Rendering**: `ChatInterface.tsx` uses the registry to dynamically lookup and render components based on tool names.

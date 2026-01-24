@@ -277,7 +277,7 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "cursor-pointer transition-all duration-200",
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
@@ -288,24 +288,46 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "cursor-pointer transition-all duration-200",
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
-                      onClick={() => handleSend("Show me spending by category")}
+                      onClick={() => handleSend("Show spending by category")}
                     >
                       Category breakdown
                     </Badge>
                     <Badge
                       variant="outline"
                       className={cn(
-                        "cursor-pointer transition-all duration-200",
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
                       onClick={() => handleSend("Show my budget status")}
                     >
                       Budget status
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
+                      onClick={() => handleSend("Show my recent transactions")}
+                    >
+                      Recent transactions
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "cursor-pointer transition-all duration-200 px-3 py-1.5",
+                        "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
+                        "active:scale-95"
+                      )}
+                      onClick={() => handleSend("List my accounts")}
+                    >
+                      My accounts
                     </Badge>
                   </div>
                 </div>
