@@ -41,6 +41,7 @@ The AI assistant uses specialized tools to interact with your financial data:
 - **Recurring Transaction Improvements** - Enhanced automation with cron scheduling (addressing current cron issues)
 - **Enhanced AI Chat** - Expanded AI capabilities with tools for creating categories, recurring transactions, and more through natural conversation
 - **Generative AI Features** - Advanced AI-powered financial insights and personalized recommendations
+- **Progressive Web App (PWA)** - In progress: Enable installation on home screen for a native app-like experience
 
 ## Technology Stack
 
