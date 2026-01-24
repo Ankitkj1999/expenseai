@@ -327,6 +327,9 @@ Current date: ${new Date().toISOString().split('T')[0]}`,
     // Convert to UI message stream response for generative UI
     const streamResponse = result.toUIMessageStreamResponse();
 
+    // Add session ID to headers so client can track it
+    streamResponse.headers.set('X-Session-Id', chatSession._id.toString());
+
     // Save assistant response to session asynchronously (don't await to avoid blocking stream)
     result.text.then((responseText) => {
       if (responseText && responseText.trim()) {

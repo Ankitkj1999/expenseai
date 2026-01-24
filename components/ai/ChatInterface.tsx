@@ -43,6 +43,55 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Ref to track if session ID update is from new chat creation to avoid reloading
+  const isCreatingSessionRef = useRef(false);
+
+
+  // Load session history when sessionId changes
+  useEffect(() => {
+    if (sessionId && !isCreatingSessionRef.current) {
+      loadSessionMessages(sessionId);
+    }
+    // Reset the ref after checking
+    if (isCreatingSessionRef.current) {
+      isCreatingSessionRef.current = false;
+    }
+  }, [sessionId]);
+
+  const loadSessionMessages = async (id: string) => {
+    setIsLoading(true);
+    // Clear messages while loading to avoid confusion
+    setMessages([]); 
+    try {
+      const response = await fetch(`/api/ai/chat?sessionId=${id}`);
+      if (!response.ok) throw new Error('Failed to load session');
+      
+      const data = await response.json();
+      if (data.success && data.session) {
+        // Map DB messages to UI messages
+        const loadedMessages: Message[] = data.session.messages.map((m: any, index: number) => ({
+          id: m._id || `${id}-${index}`,
+          role: m.role,
+          content: m.content,
+          // Note: Tool invocations are not currently fully persisted in DB for history
+          // We map basics here if they exist in future
+          toolInvocations: m.toolCalls ? m.toolCalls.map((tc: any) => ({
+             state: 'result',
+             toolCallId: tc._id || `tool-${index}`,
+             toolName: tc.toolName,
+             args: tc.arguments,
+             result: tc.result
+          })) : undefined
+        }));
+        setMessages(loadedMessages);
+      }
+    } catch (err) {
+      console.error('Error loading session:', err);
+      setError('Failed to load conversation history');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -88,6 +137,13 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
 
       if (!response.body) {
         throw new Error('No response body');
+      }
+
+      // Check for new session ID in headers
+      const newSessionId = response.headers.get('X-Session-Id');
+      if (newSessionId && newSessionId !== sessionId) {
+        isCreatingSessionRef.current = true;
+        setSessionId(newSessionId);
       }
 
       // Handle streaming response
@@ -186,8 +242,13 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
   };
 
   const handleSelectSession = (id: string) => {
-    setSessionId(id);
-    setShowHistory(false);
+    // Only update if it's a different session
+    if (id !== sessionId) {
+      setSessionId(id);
+      setShowHistory(false);
+    } else {
+      setShowHistory(false);
+    }
   };
 
   const handleNewChat = () => {
@@ -264,7 +325,11 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
               ref={scrollRef}
               className="flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
             >
-              {messages.length === 0 ? (
+              {isLoading && messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center px-2">
                   <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted mb-3 sm:mb-4">
                     <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
