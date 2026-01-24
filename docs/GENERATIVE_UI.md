@@ -47,7 +47,8 @@ The system transforms AI tool outputs into rich, interactive React components in
 
 ## Technical Implementation
 
+- **Component Registry**: Centralized management in `components/ai/registry.tsx`. Maps tool names to React components, making the system highly scalable.
 - **Streaming Architecture**: Uses Vercel AI SDK `streamText` with custom logic to parse `tool-input-available` and `tool-output-available` events.
-- **Client-Side Rendering**: `ChatInterface.tsx` dynamically renders components based on tool names.
+- **Client-Side Rendering**: `ChatInterface.tsx` uses the registry to dynamically lookup and render components based on tool names.
 - **Seamless Integration**: AI generates a text summary *after* the tool executes, providing both visual data and natural language context (enabled by `stepCountIs(5)`).
 - **Type Safety**: Full TypeScript support with proper interfaces for all component props and tool results.
