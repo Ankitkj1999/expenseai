@@ -16,17 +16,23 @@ ExpenseAI eliminates the friction of traditional expense tracking by allowing us
 - **Recurring Transactions** - Automate regular expenses and income
 - **Custom Categories** - Create personalized expense categories
 
-## AI Tools & Capabilities
+## Generative UI & AI Capabilities
 
-The AI assistant uses specialized tools to interact with your financial data:
+The AI assistant is equipped with **Generative UI** capabilities, rendering rich, visual components directly in the chat interface. These tools are fully usable today, providing immediate visual insights alongside text responses.
 
-- **`getTransactions`** - Retrieve transaction history with filters (type, category, date range, account)
-- **`createTransaction`** - Log new expenses, income, or transfers through natural language
-- **`getSpendingSummary`** - Get income, expenses, and net balance for any period
-- **`getCategoryBreakdown`** - Analyze spending or income by category with percentages
-- **`getBudgetStatus`** - Check budget usage, remaining amounts, and alerts
-- **`getAccounts`** - List all accounts with balances and details
-- **`getCategories`** - View available expense and income categories
+### UI-Rendering Tools
+The following tools produce standardized, beautiful UI cards:
+- **Monthly Spending** (`getSpendingSummary`) – Displays income vs. expenses and net balance cards.
+- **Category Breakdown** (`getCategoryBreakdown`) – Renders interactive donut charts and category distributions.
+- **Budget Status** (`getBudgetStatus`) – Visual progress bars for budget tracking and alerts.
+- **Recent Transactions** (`getTransactions`) – Clean lists of recent activity with category icons.
+- **My Accounts** (`getAccounts`) – Overview of account balances and net worth.
+
+### Standard Capabilities
+- **`createTransaction`** – Log new expenses, income, or transfers via natural language.
+- **`getCategories`** – View available expense and income categories.
+
+> **Note:** While currently providing rich visualizations, further interactive capabilities (such as inline editing) are planned for the near future.
 
 **Example Queries:**
 - "Show my budget status"
@@ -40,7 +46,7 @@ The AI assistant uses specialized tools to interact with your financial data:
 - **Notifications** - Real-time alerts for budget limits, recurring transactions, and spending insights
 - **Recurring Transaction Improvements** - Enhanced automation with cron scheduling (addressing current cron issues)
 - **Enhanced AI Chat** - Expanded AI capabilities with tools for creating categories, recurring transactions, and more through natural conversation
-- **Generative AI Features** - Advanced AI-powered financial insights and personalized recommendations
+- **Interactive UI Components** - Advanced interactivity for chat components (inline editing, actions)
 - **Progressive Web App (PWA)** - In progress: Enable installation on home screen for a native app-like experience
 
 ## Technology Stack
