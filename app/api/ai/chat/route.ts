@@ -24,7 +24,7 @@ const chatRequestSchema = z.object({
 export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
   console.log('\n========== AI CHAT REQUEST START ==========');
   const body = await request.json();
-  
+
   // Validate request body
   const validation = chatRequestSchema.safeParse(body);
   if (!validation.success) {
@@ -41,9 +41,9 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
       }
     );
   }
-  
+
   const { messages, sessionId } = validation.data;
-  
+
   console.log('[AI Chat] Request received');
   console.log('[AI Chat] userId:', request.userId);
   console.log('[AI Chat] sessionId:', sessionId);
@@ -142,6 +142,18 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           console.log('[AI Chat] Executing getSpendingSummary tool');
           const result = await tools.getSpendingSummary.execute(params, request.userId);
           console.log('[AI Chat] getSpendingSummary completed successfully');
+
+          // Transform the result to match SpendingSummary component props
+          if (result.success && result.summary) {
+            return {
+              totalIncome: result.summary.totalIncome || 0,
+              totalExpense: result.summary.totalExpense || 0,
+              netBalance: result.summary.netBalance || 0,
+              transactionCount: result.summary.transactionCount || 0,
+              period: result.summary.period || { start: new Date().toISOString(), end: new Date().toISOString() },
+              currency: currencySymbol,
+            };
+          }
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in getSpendingSummary:', error);
@@ -157,6 +169,19 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
           console.log('[AI Chat] Executing getCategoryBreakdown tool');
           const result = await tools.getCategoryBreakdown.execute(params, request.userId);
           console.log('[AI Chat] getCategoryBreakdown completed successfully');
+
+          // Transform the result to match CategoryBreakdown component props
+          if (result.success && result.breakdown) {
+            return {
+              categories: result.breakdown.map((item: { categoryName: string; amount: number; percentage: number; color?: string }) => ({
+                name: item.categoryName,
+                amount: item.amount,
+                percentage: Math.round(item.percentage),
+                color: item.color || '#8884d8',
+              })),
+              currency: currencySymbol,
+            };
+          }
           return result;
         } catch (error) {
           console.error('[AI Chat] ERROR in getCategoryBreakdown:', error);
@@ -213,12 +238,12 @@ export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
 
   console.log('[AI Chat] Tools configured:', Object.keys(aiTools));
 
-  // Call Vercel AI SDK with AWS Bedrock Claude
-  console.log('[AI Chat] Calling Bedrock Claude with generateText (non-streaming)...');
-  
+  // Call Vercel AI SDK with AWS Bedrock Claude using streamText for Generative UI
+  console.log('[AI Chat] Calling Bedrock Claude with streamText for Generative UI...');
+
   try {
-    // Use generateText to handle tool calls properly, then stream the result
-    const result = await generateText({
+    // Use streamText with tools for Generative UI
+    const result = streamText({
       model: bedrock('anthropic.claude-3-sonnet-20240229-v1:0'),
       messages,
       system: `You are a helpful AI assistant for ExpenseAI, an expense tracking application.
@@ -244,6 +269,12 @@ TRANSACTION CREATION WORKFLOW:
 5. Match the category to the transaction type (e.g., "Food & Dining" or "Groceries" for grocery expenses)
 6. NEVER make up or guess account/category IDs - only use IDs from getAccounts/getCategories
 
+GENERATIVE UI TOOL USAGE:
+- When users ask about spending summaries (e.g., "What did I spend this month?"), use getSpendingSummary
+- When users ask about category breakdowns (e.g., "Show spending by category"), use getCategoryBreakdown
+- These tools will render beautiful visual components automatically
+- After calling these tools, provide a brief natural language summary of the key insights
+
 GENERAL TOOL USAGE:
 - ALWAYS use tools to fetch real data before responding
 - NEVER assume data doesn't exist - check first using appropriate tools
@@ -253,73 +284,43 @@ GENERAL TOOL USAGE:
 
 Current date: ${new Date().toISOString().split('T')[0]}`,
       tools: aiTools,
-      stopWhen: stepCountIs(5), // Enable automatic multi-step tool execution (up to 5 steps)
+      stopWhen: stepCountIs(5), // Allow up to 5 steps to continue after tool calls
     });
 
-    console.log('[AI Chat] generateText completed');
-    console.log('[AI Chat] Tool calls made:', result.toolCalls?.length || 0);
-    if (result.toolCalls && result.toolCalls.length > 0) {
-      result.toolCalls.forEach((call: { toolName?: string; args?: unknown }, index: number) => {
-        console.log(`[AI Chat] Tool Call ${index + 1}:`, {
-          name: call.toolName,
-          args: JSON.stringify(call.args || {})
-        });
-      });
-    }
-    console.log('[AI Chat] Tool results:', result.toolResults?.length || 0);
-    if (result.toolResults && result.toolResults.length > 0) {
-      result.toolResults.forEach((toolResult: { toolName?: string; result?: unknown }, index: number) => {
-        console.log(`[AI Chat] Tool Result ${index + 1}:`, {
-          toolName: toolResult.toolName,
-          result: JSON.stringify(toolResult.result || {}).substring(0, 500)
-        });
-      });
-    }
-    console.log('[AI Chat] Response text length:', result.text?.length || 0);
-    console.log('[AI Chat] Response text:', result.text);
-    console.log('[AI Chat] Finish reason:', result.finishReason);
-    
-    const responseText = result.text;
-    
-    // Save assistant response to chat session
-    try {
-      if (responseText && responseText.trim()) {
-        const session = await ChatSession.findById(chatSession._id);
-        if (session) {
-          session.messages.push({
-            role: 'assistant',
-            content: responseText,
-            timestamp: new Date(),
-          });
-          await session.save();
-          console.log('[AI Chat] Assistant message saved to session');
-        }
-      }
-    } catch (error) {
-      console.error('[AI Chat] Error saving assistant message:', error);
-    }
+    console.log('[AI Chat] streamText initiated');
 
-    console.log('========== AI CHAT REQUEST END ==========\n');
-    
-    // Return the response as JSON (since we're not streaming anymore)
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: responseText,
-        sessionId: chatSession._id.toString(),
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Session-Id': chatSession._id.toString(),
-        },
+    // Convert to UI message stream response for generative UI
+    const streamResponse = result.toUIMessageStreamResponse();
+
+    // Save assistant response to session asynchronously (don't await to avoid blocking stream)
+    result.text.then((responseText) => {
+      if (responseText && responseText.trim()) {
+        ChatSession.findById(chatSession._id).then(session => {
+          if (session) {
+            session.messages.push({
+              role: 'assistant',
+              content: responseText,
+              timestamp: new Date(),
+            });
+            session.save().then(() => {
+              console.log('[AI Chat] Assistant message saved to session');
+            }).catch((error: Error) => {
+              console.error('[AI Chat] Error saving assistant message:', error);
+            });
+          }
+        }).catch((error: Error) => {
+          console.error('[AI Chat] Error finding session:', error);
+        });
       }
-    );
+    });
+
+    console.log('========== AI CHAT REQUEST END (STREAMING) ==========\n');
+
+    return streamResponse;
   } catch (error) {
-    console.error('[AI Chat] ERROR in generateText:', error);
+    console.error('[AI Chat] ERROR in streamText:', error);
     console.log('========== AI CHAT REQUEST END (ERROR) ==========\n');
-    
+
     return new Response(
       JSON.stringify({
         success: false,

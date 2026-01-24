@@ -8,24 +8,28 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { ChatHistory } from './ChatHistory';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, History, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SpendingSummary } from './SpendingSummary';
+import { CategoryBreakdown } from './CategoryBreakdown';
 
-interface ToolCall {
-  name: string;
-  status: 'pending' | 'completed' | 'error';
+interface ToolInvocation {
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
+  state: 'call' | 'result' | 'error';
+  result?: unknown;
 }
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolCalls?: ToolCall[];
+  toolInvocations?: ToolInvocation[];
 }
 
 interface ChatInterfaceProps {
@@ -41,7 +45,7 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive with smooth behavior
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
@@ -50,32 +54,6 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
       });
     }
   }, [messages]);
-
-  // Load session if sessionId exists
-  useEffect(() => {
-    if (sessionId && open) {
-      loadSession(sessionId);
-    }
-  }, [sessionId, open]);
-
-  const loadSession = async (id: string) => {
-    try {
-      const response = await fetch(`/api/ai/chat?sessionId=${id}`);
-      if (!response.ok) throw new Error('Failed to load session');
-      
-      const data = await response.json();
-      if (data.success && data.session) {
-        const loadedMessages: Message[] = data.session.messages.map((msg: { role: 'user' | 'assistant'; content: string }, index: number) => ({
-          id: `${id}-${index}`,
-          role: msg.role,
-          content: msg.content,
-        }));
-        setMessages(loadedMessages);
-      }
-    } catch (error) {
-      console.error('Error loading session:', error);
-    }
-  };
 
   const handleSend = async (input: string) => {
     if (!input.trim() || isLoading) return;
@@ -90,9 +68,6 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
     setIsLoading(true);
     setError(null);
 
-    // Simulate tool calls (in real implementation, these would come from the API)
-    const mockToolCalls: ToolCall[] = [];
-    
     try {
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -112,25 +87,77 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to get response');
+      if (!response.body) {
+        throw new Error('No response body');
       }
 
-      // Update session ID if new session was created
-      if (data.sessionId && !sessionId) {
-        setSessionId(data.sessionId);
-      }
-
-      const assistantMessage: Message = {
+      // Handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.message || 'No response received',
-        toolCalls: mockToolCalls.length > 0 ? mockToolCalls : undefined,
+        content: '',
+        toolInvocations: [],
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              // Handle different message types from the stream
+              if (data.type === 'text-delta') {
+                assistantMessage.content += data.delta;
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1] = { ...assistantMessage };
+                  return newMessages;
+                });
+              } else if (data.type === 'tool-input-available') {
+                // Tool is being called
+                const toolInvocation: ToolInvocation = {
+                  toolCallId: data.toolCallId,
+                  toolName: data.toolName,
+                  args: data.input,
+                  state: 'call',
+                };
+                assistantMessage.toolInvocations = assistantMessage.toolInvocations || [];
+                assistantMessage.toolInvocations.push(toolInvocation);
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1] = { ...assistantMessage };
+                  return newMessages;
+                });
+              } else if (data.type === 'tool-output-available') {
+                // Tool result is available
+                const invocations = assistantMessage.toolInvocations || [];
+                const invocation = invocations.find(inv => inv.toolCallId === data.toolCallId);
+                if (invocation) {
+                  invocation.state = 'result';
+                  invocation.result = data.output;
+                  setMessages((prev) => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = { ...assistantMessage };
+                    return newMessages;
+                  });
+                }
+              }
+            } catch (e) {
+              // Ignore JSON parse errors for incomplete chunks
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -206,10 +233,9 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
         </SheetHeader>
 
         <div className="flex flex-1 overflow-hidden relative">
-          {/* Chat History Sidebar - Full width overlay on mobile, sidebar on desktop */}
+          {/* Chat History Sidebar */}
           {showHistory && (
             <>
-              {/* Backdrop for mobile */}
               <div
                 className={cn(
                   "absolute inset-0 bg-background/80 backdrop-blur-sm z-10 md:hidden",
@@ -218,7 +244,6 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                 onClick={() => setShowHistory(false)}
               />
               
-              {/* Sidebar */}
               <div className={cn(
                 "absolute inset-y-0 left-0 w-full sm:w-80 md:relative md:w-80 lg:w-96",
                 "border-r shrink-0 z-20 bg-background",
@@ -247,7 +272,7 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                   </div>
                   <h3 className="text-base sm:text-lg font-medium mb-2">Start a conversation</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mb-4 sm:mb-6">
-                    I can help you track expenses, analyze spending, check budgets, and more.
+                    I can help you track expenses, analyze spending, and show you visual summaries.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center max-w-md">
                     <Badge
@@ -268,9 +293,9 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
-                      onClick={() => handleSend("Show my budget status")}
+                      onClick={() => handleSend("Show me spending by category")}
                     >
-                      Budget status
+                      Category breakdown
                     </Badge>
                     <Badge
                       variant="outline"
@@ -279,28 +304,75 @@ export function ChatInterface({ open, onOpenChange }: ChatInterfaceProps) {
                         "hover:bg-primary/10 hover:border-primary/50 hover:scale-105",
                         "active:scale-95"
                       )}
-                      onClick={() => handleSend("I spent $50 on lunch")}
+                      onClick={() => handleSend("Show my budget status")}
                     >
-                      Log expense
+                      Budget status
                     </Badge>
                   </div>
                 </div>
               ) : (
                 <>
-                  {messages.map((message, index) => (
-                    <ChatMessage
+                  {messages.map((message) => (
+                    <div
                       key={message.id}
-                      role={message.role}
-                      content={message.content}
-                      toolCalls={message.toolCalls}
-                      isStreaming={isLoading && index === messages.length - 1}
-                      onRegenerate={
-                        message.role === 'assistant' && index === messages.length - 1
-                          ? handleRegenerate
-                          : undefined
-                      }
-                    />
+                      className={cn(
+                        "flex gap-3 mb-4",
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                          <Sparkles className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
+
+                      <div className={cn(
+                        "flex flex-col gap-2 max-w-[80%]",
+                        message.role === 'user' ? 'items-end' : 'items-start'
+                      )}>
+                        {message.role === 'user' ? (
+                          <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                            {message.content}
+                          </div>
+                        ) : (
+                          <>
+                            {/* Render text content */}
+                            {message.content && (
+                              <div className="prose prose-sm max-w-none dark:prose-invert">
+                                <p className="whitespace-pre-wrap">{message.content}</p>
+                              </div>
+                            )}
+                            
+                            {/* Render tool results */}
+                            {message.toolInvocations?.map((tool, index) => {
+                              if (tool.toolName === 'getSpendingSummary' && tool.state === 'result' && tool.result) {
+                                return <SpendingSummary key={index} {...(tool.result as any)} />;
+                              }
+                              if (tool.toolName === 'getCategoryBreakdown' && tool.state === 'result' && tool.result) {
+                                return <CategoryBreakdown key={index} {...(tool.result as any)} />;
+                              }
+                              if (tool.state === 'call') {
+                                return (
+                                  <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Loading {tool.toolName}...
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })}
+                          </>
+                        )}
+                      </div>
+
+                      {message.role === 'user' && (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                          <span className="text-sm font-medium">You</span>
+                        </div>
+                      )}
+                    </div>
                   ))}
+
                   {isLoading && messages[messages.length - 1]?.role === 'user' && (
                     <div className="flex gap-3 mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
