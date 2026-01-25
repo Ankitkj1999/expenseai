@@ -27,7 +27,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Tag,
-  Plus
+  Plus,
+  FileJson
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CURRENCIES, getCurrencyByCode } from '@/lib/constants/currencies';
@@ -37,6 +38,8 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { CategoryDialog } from '@/components/forms/CategoryDialog';
 import { CategoryCard } from '@/components/forms/CategoryCard';
 import type { CategoryResponse } from '@/types';
+import { ImportDialog } from '@/components/settings/ImportDialog';
+import { useRef } from 'react';
 
 export default function SettingsPage() {
   // Loading states
@@ -75,6 +78,11 @@ export default function SettingsPage() {
 
   // Type-safe categories array
   const typedCategories = categories as CategoryResponse[];
+
+  // Import state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user data on mount
   useEffect(() => {
@@ -201,14 +209,53 @@ export default function SettingsPage() {
     }
   };
 
-  const handleExport = (format: 'json' | 'csv') => {
-    // TODO: Implement export functionality
-    toast.info(`Export as ${format.toUpperCase()} feature coming soon`);
+  const handleExport = async (format: 'json' | 'csv' | 'pdf') => {
+    try {
+      const toastId = toast.loading(`Generating ${format.toUpperCase()} export...`);
+      
+      const response = await fetch(`/api/import-export/export?format=${format}`);
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      // Get filename from header or create default
+      const disposition = response.headers.get('Content-Disposition');
+      const filename = disposition?.split('filename=')[1]?.replace(/"/g, '') || `export-${new Date().toISOString()}.${format}`;
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.dismiss(toastId);
+      toast.success(`${format.toUpperCase()} exported successfully`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error(`Failed to export ${format.toUpperCase()}`);
+      console.error(error);
+    }
   };
 
   const handleImport = () => {
-    // TODO: Implement import functionality
-    toast.info('Import feature coming soon');
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+      setImportDialogOpen(true);
+      // Reset input so same file can be selected again
+      e.target.value = '';
+    }
   };
 
   const selectedCurrency = getCurrencyByCode(currency);
@@ -631,12 +678,16 @@ export default function SettingsPage() {
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button onClick={() => handleExport('json')} variant="outline" className="gap-2">
-                    <Download className="h-4 w-4" />
+                    <FileJson className="h-4 w-4" />
                     Export as JSON
                   </Button>
                   <Button onClick={() => handleExport('csv')} variant="outline" className="gap-2">
                     <Download className="h-4 w-4" />
                     Export as CSV
+                  </Button>
+                  <Button onClick={() => handleExport('pdf')} variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Export as PDF
                   </Button>
                 </div>
 
@@ -734,6 +785,23 @@ export default function SettingsPage() {
         open={categoryDialogOpen}
         onOpenChange={setCategoryDialogOpen}
         category={selectedCategory}
+      />
+
+      <ImportDialog 
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        file={importFile}
+        onSuccess={() => {
+           // Optionally refetch transactions/accounts/categories here
+           toast.success('Refresh page to see updated data');
+        }}
+      />
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept=".json,.csv"
       />
     </PageContainer>
   );
