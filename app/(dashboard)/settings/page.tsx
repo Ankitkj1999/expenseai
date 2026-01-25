@@ -27,7 +27,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Tag,
-  Plus
+  Plus,
+  FileJson
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CURRENCIES, getCurrencyByCode } from '@/lib/constants/currencies';
@@ -208,9 +209,39 @@ export default function SettingsPage() {
     }
   };
 
-  const handleExport = (format: 'json' | 'csv') => {
-    window.location.href = `/api/import-export/export?format=${format}`;
-    toast.success(`Downloading ${format.toUpperCase()} export...`);
+  const handleExport = async (format: 'json' | 'csv' | 'pdf') => {
+    try {
+      const toastId = toast.loading(`Generating ${format.toUpperCase()} export...`);
+      
+      const response = await fetch(`/api/import-export/export?format=${format}`);
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      // Get filename from header or create default
+      const disposition = response.headers.get('Content-Disposition');
+      const filename = disposition?.split('filename=')[1]?.replace(/"/g, '') || `export-${new Date().toISOString()}.${format}`;
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.dismiss(toastId);
+      toast.success(`${format.toUpperCase()} exported successfully`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error(`Failed to export ${format.toUpperCase()}`);
+      console.error(error);
+    }
   };
 
   const handleImport = () => {
@@ -647,12 +678,16 @@ export default function SettingsPage() {
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button onClick={() => handleExport('json')} variant="outline" className="gap-2">
-                    <Download className="h-4 w-4" />
+                    <FileJson className="h-4 w-4" />
                     Export as JSON
                   </Button>
                   <Button onClick={() => handleExport('csv')} variant="outline" className="gap-2">
                     <Download className="h-4 w-4" />
                     Export as CSV
+                  </Button>
+                  <Button onClick={() => handleExport('pdf')} variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Export as PDF
                   </Button>
                 </div>
 
