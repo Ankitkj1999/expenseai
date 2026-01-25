@@ -37,6 +37,8 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { CategoryDialog } from '@/components/forms/CategoryDialog';
 import { CategoryCard } from '@/components/forms/CategoryCard';
 import type { CategoryResponse } from '@/types';
+import { ImportDialog } from '@/components/settings/ImportDialog';
+import { useRef } from 'react';
 
 export default function SettingsPage() {
   // Loading states
@@ -75,6 +77,11 @@ export default function SettingsPage() {
 
   // Type-safe categories array
   const typedCategories = categories as CategoryResponse[];
+
+  // Import state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user data on mount
   useEffect(() => {
@@ -202,13 +209,22 @@ export default function SettingsPage() {
   };
 
   const handleExport = (format: 'json' | 'csv') => {
-    // TODO: Implement export functionality
-    toast.info(`Export as ${format.toUpperCase()} feature coming soon`);
+    window.location.href = `/api/import-export/export?format=${format}`;
+    toast.success(`Downloading ${format.toUpperCase()} export...`);
   };
 
   const handleImport = () => {
-    // TODO: Implement import functionality
-    toast.info('Import feature coming soon');
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+      setImportDialogOpen(true);
+      // Reset input so same file can be selected again
+      e.target.value = '';
+    }
   };
 
   const selectedCurrency = getCurrencyByCode(currency);
@@ -734,6 +750,23 @@ export default function SettingsPage() {
         open={categoryDialogOpen}
         onOpenChange={setCategoryDialogOpen}
         category={selectedCategory}
+      />
+
+      <ImportDialog 
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        file={importFile}
+        onSuccess={() => {
+           // Optionally refetch transactions/accounts/categories here
+           toast.success('Refresh page to see updated data');
+        }}
+      />
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept=".json,.csv"
       />
     </PageContainer>
   );
