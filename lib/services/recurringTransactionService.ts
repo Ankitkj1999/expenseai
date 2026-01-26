@@ -282,7 +282,8 @@ export async function processDueRecurringTransactions(): Promise<{
       );
 
       // Create actual transaction
-      const transaction = await createTransaction(recurring.userId.toString(), {
+      const transaction = await createTransaction({
+        userId: recurring.userId.toString(),
         type: recurring.type,
         amount: recurring.amount,
         description: recurring.description,

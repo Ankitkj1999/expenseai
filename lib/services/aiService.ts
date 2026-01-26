@@ -79,7 +79,7 @@ export const tools = {
     execute: async (params: z.infer<typeof getTransactionsSchema>, userId: string) => {
       console.log('[AI Tool] getTransactions called with params:', JSON.stringify(params, null, 2));
       console.log('[AI Tool] userId:', userId);
-      
+
       const filters: Record<string, unknown> = {};
 
       if (params.type) filters.type = params.type;
@@ -109,7 +109,7 @@ export const tools = {
         const toAccount = t.toAccountId as any;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const category = t.categoryId as any;
-        
+
         return {
           id: t._id.toString(),
           type: t.type,
@@ -157,8 +157,9 @@ export const tools = {
     execute: async (params: z.infer<typeof createTransactionSchema>, userId: string) => {
       console.log('[AI Tool] createTransaction called with params:', JSON.stringify(params, null, 2));
       console.log('[AI Tool] userId:', userId);
-      
-      const transaction = await transactionService.createTransaction(userId, {
+
+      const transaction = await transactionService.createTransaction({
+        userId,
         type: params.type,
         amount: params.amount,
         description: params.description,
@@ -197,7 +198,7 @@ export const tools = {
     execute: async (params: z.infer<typeof getSpendingSummarySchema>, userId: string) => {
       console.log('[AI Tool] getSpendingSummary called with params:', JSON.stringify(params, null, 2));
       console.log('[AI Tool] userId:', userId);
-      
+
       const summary = await analyticsService.getSummary(userId, {
         period: params.period,
         startDate: params.startDate ? new Date(params.startDate) : undefined,
@@ -223,7 +224,7 @@ export const tools = {
     execute: async (params: z.infer<typeof getCategoryBreakdownSchema>, userId: string) => {
       console.log('[AI Tool] getCategoryBreakdown called with params:', JSON.stringify(params, null, 2));
       console.log('[AI Tool] userId:', userId);
-      
+
       const breakdown = await analyticsService.getCategoryBreakdown(userId, {
         type: params.type,
         period: params.period,
@@ -251,13 +252,13 @@ export const tools = {
     execute: async (params: z.infer<typeof getBudgetStatusSchema>, userId: string) => {
       console.log('[AI Tool] getBudgetStatus called with params:', JSON.stringify(params, null, 2));
       console.log('[AI Tool] userId:', userId);
-      
+
       if (params.budgetId) {
         // Get specific budget status
         console.log('[AI Tool] Fetching specific budget:', params.budgetId);
         const status = await budgetService.getBudgetStatus(params.budgetId, userId);
         console.log('[AI Tool] getBudgetStatus result for specific budget:', status);
-        
+
         if (!status) {
           return {
             success: false,
@@ -265,7 +266,7 @@ export const tools = {
             message: 'The specified budget does not exist or you do not have access to it.',
           };
         }
-        
+
         // Serialize to plain object
         const serializedStatus = {
           budget: {
@@ -284,7 +285,7 @@ export const tools = {
           isOverBudget: status.isOverBudget,
           shouldAlert: status.shouldAlert,
         };
-        
+
         return {
           success: true,
           status: serializedStatus,
@@ -295,7 +296,7 @@ export const tools = {
         console.log('[AI Tool] Fetching all active budgets for user');
         const statuses = await budgetService.getAllBudgetStatuses(userId);
         console.log('[AI Tool] getBudgetStatus result - count:', statuses.length);
-        
+
         // Serialize budget statuses to plain objects (avoid DataCloneError)
         const serializedStatuses = statuses.map(s => ({
           budget: {
@@ -315,7 +316,7 @@ export const tools = {
           isOverBudget: s.isOverBudget,
           shouldAlert: s.shouldAlert,
         }));
-        
+
         console.log('[AI Tool] Budget details:', JSON.stringify(serializedStatuses.map(s => ({
           name: s.budget.name,
           amount: s.budget.amount,
@@ -323,7 +324,7 @@ export const tools = {
           remaining: s.remaining,
           percentage: s.percentage
         })), null, 2));
-        
+
         if (serializedStatuses.length === 0) {
           return {
             success: true,
@@ -332,7 +333,7 @@ export const tools = {
             message: 'No active budgets found. User needs to create budgets first.',
           };
         }
-        
+
         return {
           success: true,
           budgets: serializedStatuses,
@@ -353,12 +354,12 @@ export const tools = {
     execute: async (params: z.infer<typeof getAccountsSchema>, userId: string) => {
       console.log('[AI Tool] getAccounts called');
       console.log('[AI Tool] userId:', userId);
-      
+
       const Account = (await import('@/lib/db/models/Account')).default;
       const accounts = await Account.find({ userId, isActive: true });
-      
+
       console.log('[AI Tool] getAccounts result - count:', accounts.length);
-      
+
       return {
         success: true,
         accounts: accounts.map(acc => ({
@@ -383,7 +384,7 @@ export const tools = {
     execute: async (params: z.infer<typeof getCategoriesSchema>, userId: string) => {
       console.log('[AI Tool] getCategories called with params:', JSON.stringify(params, null, 2));
       console.log('[AI Tool] userId:', userId);
-      
+
       const Category = (await import('@/lib/db/models/Category')).default;
       const query: Record<string, unknown> = {
         $or: [
@@ -391,15 +392,15 @@ export const tools = {
           { isSystem: true }
         ],
       };
-      
+
       if (params.type) {
         query.type = params.type;
       }
-      
+
       const categories = await Category.find(query);
-      
+
       console.log('[AI Tool] getCategories result - count:', categories.length);
-      
+
       return {
         success: true,
         categories: categories.map(cat => ({

@@ -35,6 +35,7 @@ const AccountSchema = new Schema<IAccount>(
       enum: ACCOUNT_TYPES,
     },
     // Implement on the fly calulation of balance from transactions later
+    // TODO: Should balance be allowed to go negative? For credit accounts, yes. or We should let user decide? 
     balance: {
       type: Number,
       required: true,

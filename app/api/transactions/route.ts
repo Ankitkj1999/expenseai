@@ -10,14 +10,14 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
   // Validate query parameters
   const validation = validateQueryParams(request, ValidationSchemas.transaction.query);
   if (!validation.success) return validation.response;
-  
+
   const { type, accountId, categoryId, startDate, endDate, limit, skip } = validation.data;
-  
+
   // Build match filter for aggregation
   const matchFilter: Record<string, unknown> = {
     userId: new mongoose.Types.ObjectId(request.userId)
   };
-  
+
   if (type) matchFilter.type = type;
   if (accountId) matchFilter.accountId = new mongoose.Types.ObjectId(accountId);
   if (categoryId) matchFilter.categoryId = new mongoose.Types.ObjectId(categoryId);
@@ -26,7 +26,7 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
     if (startDate) (matchFilter.date as Record<string, unknown>).$gte = new Date(startDate);
     if (endDate) (matchFilter.date as Record<string, unknown>).$lte = new Date(endDate);
   }
-  
+
   // Use aggregation with $facet to get both data and count in a single query
   const [result] = await Transaction.aggregate([
     { $match: matchFilter },
@@ -113,34 +113,39 @@ export const GET = withAuthAndDb(async (request: AuthenticatedRequest) => {
       },
     },
   ]);
-  
+
   const transactions = result.data || [];
   const total = result.total[0]?.count || 0;
-  
+
   return ApiResponse.paginated(transactions, total, limit || 50, skip || 0);
 });
 
 // POST /api/transactions - Create a new transaction
 export const POST = withAuthAndDb(async (request: AuthenticatedRequest) => {
   const body = await request.json();
-  
+
   // Validate request body
   const validation = validateRequest(ValidationSchemas.transaction.create, body);
   if (!validation.success) return validation.response;
-  
+
   const data = validation.data;
-  
+
   try {
     // Create transaction with balance updates
-    const transaction = await createTransaction(request.userId, data as unknown as Parameters<typeof createTransaction>[1]);
-    
+    const transaction = await createTransaction({
+      ...data,
+      userId: request.userId,
+      date: data.date ? new Date(data.date) : new Date(),
+      attachments: data.attachments?.map((url: string) => ({ url, type: 'unknown' })),
+    });
+
     // Populate all references in a single call using array syntax
     await transaction.populate([
       { path: 'accountId', select: 'name type icon color' },
       { path: 'toAccountId', select: 'name type icon color' },
       { path: 'categoryId', select: 'name icon color' }
     ]);
-    
+
     return ApiResponse.created(transaction, 'Transaction created successfully');
   } catch (error) {
     // Handle service errors
