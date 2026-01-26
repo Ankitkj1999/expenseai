@@ -11,6 +11,7 @@ export interface ITransaction extends Document {
   categoryId: mongoose.Types.ObjectId;
   tags: string[];
   date: Date;
+  balanceAfter: number;
   attachments: Array<{
     url: string;
     type: string;
@@ -57,14 +58,14 @@ const TransactionSchema = new Schema<ITransaction>(
     toAccountId: {
       type: Schema.Types.ObjectId,
       ref: 'Account',
-      required: function(this: ITransaction) {
+      required: function (this: ITransaction) {
         return this.type === 'transfer';
       },
     },
     categoryId: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
-      required: function(this: ITransaction) {
+      required: function (this: ITransaction) {
         return this.type !== 'transfer';
       },
     },
@@ -89,6 +90,10 @@ const TransactionSchema = new Schema<ITransaction>(
     metadata: {
       type: Schema.Types.Mixed,
       default: {},
+    },
+    balanceAfter: {
+      type: Number,
+      required: true,
     },
   },
   {

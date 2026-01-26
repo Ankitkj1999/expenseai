@@ -45,67 +45,112 @@ export async function getTransactions(
 }
 
 /**
- * Create a transaction and update account balance(s)
+ * Create a transaction and update account balance(s) atomically
  */
-export async function createTransaction(
-  userId: string,
-  transactionData: Partial<ITransaction>
-): Promise<ITransaction> {
+export async function createTransaction(data: {
+  userId: mongoose.Types.ObjectId | string;
+  type: 'expense' | 'income' | 'transfer';
+  amount: number;
+  description: string;
+  accountId: mongoose.Types.ObjectId | string;
+  toAccountId?: mongoose.Types.ObjectId | string;
+  categoryId?: mongoose.Types.ObjectId | string;
+  date: Date;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  attachments?: Array<{
+    url: string;
+    type: string;
+    extractedData?: Record<string, unknown>;
+  }>;
+  aiGenerated?: boolean;
+}) {
   await connectDB();
-
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { type, amount, accountId, toAccountId } = transactionData;
+    // Calculate the amount change based on transaction type
+    let fromAccountChange = 0;
+    let toAccountChange = 0;
 
-    // Verify account ownership
-    const account = await Account.findOne({ _id: accountId, userId });
-    if (!account) {
-      throw new Error('Account not found');
+    switch (data.type) {
+      case 'expense':
+        fromAccountChange = -data.amount;
+        break;
+      case 'income':
+        fromAccountChange = data.amount;
+        break;
+      case 'transfer':
+        fromAccountChange = -data.amount;
+        toAccountChange = data.amount;
+        break;
     }
 
-    // For transfers, verify destination account
-    if (type === 'transfer' && toAccountId) {
-      const toAccount = await Account.findOne({ _id: toAccountId, userId });
+    // Update source account and get new balance
+    const fromAccount = await Account.findOneAndUpdate(
+      { _id: data.accountId, userId: data.userId },
+      { $inc: { balance: fromAccountChange } },
+      { session, new: true }
+    );
+
+    if (!fromAccount) {
+      throw new Error('Source account not found');
+    }
+
+    // Prepare metadata with transferType for source
+    const sourceMetadata = { ...(data.metadata || {}) };
+    if (data.type === 'transfer') {
+      sourceMetadata.transferType = 'outgoing';
+    }
+
+    // Create the main transaction with balanceAfter
+    const transaction = await Transaction.create(
+      [
+        {
+          ...data,
+          metadata: sourceMetadata,
+          balanceAfter: fromAccount.balance,
+        },
+      ],
+      { session }
+    );
+
+    // Handle transfer: update destination account
+    if (data.type === 'transfer' && data.toAccountId) {
+      const toAccount = await Account.findOneAndUpdate(
+        { _id: data.toAccountId, userId: data.userId },
+        { $inc: { balance: toAccountChange } },
+        { session, new: true }
+      );
+
       if (!toAccount) {
         throw new Error('Destination account not found');
       }
-    }
 
-    // Create transaction
-    const [transaction] = await Transaction.create([{ ...transactionData, userId }], { session });
-
-    // Update account balances
-    if (type === 'expense') {
-      await Account.findByIdAndUpdate(
-        accountId,
-        { $inc: { balance: -amount! } },
-        { session }
-      );
-    } else if (type === 'income') {
-      await Account.findByIdAndUpdate(
-        accountId,
-        { $inc: { balance: amount! } },
-        { session }
-      );
-    } else if (type === 'transfer' && toAccountId) {
-      // Deduct from source account
-      await Account.findByIdAndUpdate(
-        accountId,
-        { $inc: { balance: -amount! } },
-        { session }
-      );
-      // Add to destination account
-      await Account.findByIdAndUpdate(
-        toAccountId,
-        { $inc: { balance: amount! } },
+      // Create corresponding transaction for destination account
+      await Transaction.create(
+        [
+          {
+            userId: data.userId,
+            type: 'transfer',
+            amount: data.amount,
+            description: `Transfer from ${fromAccount.name}`,
+            accountId: data.toAccountId,
+            toAccountId: data.accountId,
+            categoryId: data.categoryId,
+            date: data.date,
+            balanceAfter: toAccount.balance,
+            tags: data.tags || [],
+            metadata: { ...(data.metadata || {}), transferType: 'incoming' },
+          },
+        ],
         { session }
       );
     }
 
     await session.commitTransaction();
-    return transaction;
+    return transaction[0];
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -116,6 +161,8 @@ export async function createTransaction(
 
 /**
  * Update a transaction and adjust account balances
+ * NOTE: This implementation updates the CURRENT account balance but does not fully propagate
+ * balanceAfter changes to all subsequent transactions. This is a trade-off for performance.
  */
 export async function updateTransaction(
   userId: string,
@@ -123,17 +170,16 @@ export async function updateTransaction(
   updates: Partial<ITransaction>
 ): Promise<ITransaction> {
   await connectDB();
-
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // Get original transaction within the session to prevent race conditions
+    // Get original transaction within the session
     const originalTransaction = await Transaction.findOne({
       _id: transactionId,
       userId
     }).session(session);
-    
+
     if (!originalTransaction) {
       throw new Error('Transaction not found');
     }
@@ -175,7 +221,7 @@ export async function updateTransaction(
       throw new Error('Failed to update transaction');
     }
 
-    // Apply new balance changes
+    // Apply new balance changes to Account
     if (updatedTransaction.type === 'expense') {
       await Account.findByIdAndUpdate(
         updatedTransaction.accountId,
@@ -212,55 +258,67 @@ export async function updateTransaction(
 }
 
 /**
- * Delete a transaction and revert account balance changes
+ * Delete a transaction and revert account balance changes atomically
  */
 export async function deleteTransaction(
-  userId: string,
-  transactionId: string
-): Promise<void> {
+  transactionId: mongoose.Types.ObjectId | string,
+  userId: mongoose.Types.ObjectId | string
+) {
   await connectDB();
-
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // Get transaction within the session to prevent race conditions
     const transaction = await Transaction.findOne({
       _id: transactionId,
-      userId
+      userId,
     }).session(session);
-    
+
     if (!transaction) {
       throw new Error('Transaction not found');
     }
 
-    // Revert balance changes
-    if (transaction.type === 'expense') {
-      await Account.findByIdAndUpdate(
-        transaction.accountId,
-        { $inc: { balance: transaction.amount } },
-        { session }
-      );
-    } else if (transaction.type === 'income') {
-      await Account.findByIdAndUpdate(
-        transaction.accountId,
-        { $inc: { balance: -transaction.amount } },
-        { session }
-      );
-    } else if (transaction.type === 'transfer' && transaction.toAccountId) {
-      await Account.findByIdAndUpdate(
-        transaction.accountId,
-        { $inc: { balance: transaction.amount } },
-        { session }
-      );
+    // Reverse the balance change
+    let accountChange = 0;
+    switch (transaction.type) {
+      case 'expense':
+        accountChange = transaction.amount; // Add back
+        break;
+      case 'income':
+        accountChange = -transaction.amount; // Subtract
+        break;
+      case 'transfer':
+        accountChange = transaction.amount; // Add back to source
+        break;
+    }
+
+    await Account.findByIdAndUpdate(
+      transaction.accountId,
+      { $inc: { balance: accountChange } },
+      { session }
+    );
+
+    // Handle transfer destination
+    if (transaction.type === 'transfer' && transaction.toAccountId) {
       await Account.findByIdAndUpdate(
         transaction.toAccountId,
         { $inc: { balance: -transaction.amount } },
         { session }
       );
+
+      // Delete the corresponding transfer transaction
+      await Transaction.deleteOne(
+        {
+          userId,
+          accountId: transaction.toAccountId,
+          toAccountId: transaction.accountId,
+          amount: transaction.amount,
+          date: transaction.date,
+        },
+        { session }
+      );
     }
 
-    // Delete transaction
     await Transaction.findByIdAndDelete(transactionId, { session });
 
     await session.commitTransaction();
@@ -270,4 +328,67 @@ export async function deleteTransaction(
   } finally {
     session.endSession();
   }
+}
+
+export async function reconcileAccount(accountId: mongoose.Types.ObjectId | string) {
+  await connectDB();
+  const transactions = await Transaction.find({ accountId })
+    .sort({ date: 1, createdAt: 1 })
+    .lean();
+
+  let calculatedBalance = 0;
+  const discrepancies = [];
+
+  for (const txn of transactions) {
+    if (txn.type === 'income') {
+      calculatedBalance += txn.amount;
+    } else if (txn.type === 'expense') {
+      calculatedBalance -= txn.amount;
+    } else if (txn.type === 'transfer') {
+      // Check transferType metadata to determine direction
+      const transferType = (txn.metadata as any)?.transferType;
+      if (transferType === 'incoming') {
+        calculatedBalance += txn.amount;
+      } else if (transferType === 'outgoing') {
+        calculatedBalance -= txn.amount;
+      } else {
+        // Fallback if metadata missing (old transactions), try to guess or assume outgoing
+        // Or check if toAccountId match?
+        // This is ambiguous for older transactions. 
+        // Assuming outgoing if not specified for safety, or check if toAccountId is NOT this account?
+        // In logic: toAccountId is destination.
+        // If txn.accountId == this.accountId, and txn.toAccountId is defined... 
+        // If it's outgoing, accountId=src.
+        // If it's incoming, accountId=dest, toAccountId=src.
+        // So in both cases `accountId` is THIS account.
+        // BUT `toAccountId` is the OTHER account.
+        // So we can't tell direction just by ids.
+        // We rely on 'Transfer from' description?
+        if (txn.description && txn.description.startsWith('Transfer from')) {
+          calculatedBalance += txn.amount;
+        } else {
+          calculatedBalance -= txn.amount;
+        }
+      }
+    }
+
+    if (Math.abs(calculatedBalance - txn.balanceAfter) > 0.001) {
+      discrepancies.push({
+        transactionId: txn._id,
+        expected: calculatedBalance,
+        actual: txn.balanceAfter,
+      });
+    }
+  }
+
+  const account = await Account.findById(accountId);
+  if (account && Math.abs(account.balance - calculatedBalance) > 0.001) {
+    discrepancies.push({
+      account: 'final',
+      expected: calculatedBalance,
+      actual: account.balance,
+    });
+  }
+
+  return { isValid: discrepancies.length === 0, discrepancies };
 }
